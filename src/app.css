@@ -1,0 +1,22 @@
+@import "tailwindcss";
+
+@theme {
+  --color-nord-bg: #2e3440;
+  --color-nord-panel: #3b4252;
+  --color-nord-border: #4c566a;
+  --color-nord-text: #d8dee9;
+  --color-nord-primary: #88c0d0;
+  --color-nord-success: #a3be8c;
+  --color-nord-warning: #ebcb8b;
+  --color-nord-danger: #bf616a;
+  
+  --font-mono: monospace;
+}
+
+body {
+  background-color: var(--color-nord-bg);
+  color: var(--color-nord-text);
+  font-family: var(--font-mono);
+  margin: 0;
+  overflow: hidden;
+}
