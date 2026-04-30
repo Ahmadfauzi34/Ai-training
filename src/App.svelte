@@ -1,43 +1,60 @@
 <script>
   import { onMount } from 'svelte';
-  import { Terminal, GitGraph, MessageSquare, Settings, Loader2 } from 'lucide-svelte'; // Tambah Loader2
-  import { appState, setStatus, initSystem } from './lib/state.svelte.js';
-  import { storage } from './lib/storage.js'; // Pakai adapter baru
-  import { askBrain } from './lib/brain.js';
+  import { Terminal, GitGraph, MessageSquare, Settings, Loader2 } from 'lucide-svelte';
+  import { appState, setStatus, initSystem } from './lib/state.svelte.ts';
+  import { storage } from './lib/storage.js';
+  import { askBrain } from './lib/brain.ts';
 
   import ChatView from './lib/views/ChatView.svelte';
   import GraphView from './lib/GraphView.svelte';
   import SettingsView from './lib/views/SettingsView.svelte';
 
+  // Variabel untuk menampung Timer
+  let saveTimer;
+
   onMount(async () => {
-    // 1. Cek Koneksi Worker
     try {
       const res = await askBrain('/');
-      // Jangan timpa status kalau lagi loading DB
       if (appState.isReady) setStatus(`ENGINE: ${res.engine}`);
     } catch (e) {
       setStatus("⚠️ OFFLINE: Worker Not Responding");
     }
-
-    // 2. LOAD DATABASE (PENTING)
     await initSystem();
   });
 
-  // --- AUTO-SAVE SYSTEM (ASYNC READY) ---
+  // --- AUTO-SAVE PINTAR (DEBOUNCE + SAFETY) ---
   $effect(() => {
-    // Jangan simpan kalau system belum siap (nanti data kosong menimpa data asli!)
-    if (!appState.isReady) return;
+    // 1. "Sentuh" variabel agar Svelte mendeteksi perubahan
+    const _n = appState.nodes;
+    const _e = appState.edges;
 
-    // Deteksi perubahan pada nodes/edges
-    const dataToSave = {
-      nodes: appState.nodes,
-      edges: appState.edges
-    };
+    // 👇 PENTING: Deteksi perubahan teks (Heartbeat)
+    const _trigger = appState.lastChange; 
 
-    // Simpan via Adapter (Fire and Forget)
-    storage.saveGraph(dataToSave).then(() => {
-       // console.log('Auto-saved via Adapter');
-    });
+    // 2. SAFETY GUARD (Gembok Pengaman)
+    // Jika sistem belum siap ATAU ada error storage fatal, JANGAN SAVE.
+    if (!appState.isReady || appState.isStorageError) {
+      if (appState.isStorageError) {
+        console.warn("⛔ Auto-save diblokir karena Storage Error (Safe Mode).");
+      }
+      return;
+    }
+
+    // 3. Reset timer (Debounce)
+    clearTimeout(saveTimer);
+
+    // 4. Mulai timer baru (Tunggu 1 detik)
+    saveTimer = setTimeout(() => {
+      console.log('💾 Auto-saving...'); 
+      const dataToSave = { nodes: appState.nodes, edges: appState.edges };
+
+      storage.saveGraph(dataToSave).then(() => {
+         // Save berhasil di background
+      });
+    }, 1000); 
+
+    // Cleanup
+    return () => clearTimeout(saveTimer);
   });
 </script>
 
@@ -50,7 +67,6 @@
       <span class="font-bold text-lg tracking-wider">V76</span>
     </div>
 
-    <!-- MENU TABS -->
     <div class="flex gap-1 bg-nord-bg/50 p-1 rounded-lg border border-nord-border/30">
       <button onclick={() => appState.activeTab = 'chat'} class={`px-3 py-1 rounded text-xs flex items-center gap-2 transition ${appState.activeTab === 'chat' ? 'bg-nord-primary text-nord-bg font-bold shadow-sm' : 'hover:text-nord-primary text-nord-light'}`}>
         <MessageSquare size={14} /> CHAT
@@ -66,26 +82,39 @@
 
   <!-- MAIN CONTENT AREA -->
   <div class="flex-1 relative overflow-hidden bg-nord-bg">
-    
-    <!-- LOADING SCREEN (PENTING UNTUK ASYNC DB) -->
+
     {#if !appState.isReady}
-      <div class="absolute inset-0 flex flex-col items-center justify-center bg-nord-bg z-50">
+      <div class="absolute inset-0 flex flex-col items-center justify-center bg-nord-bg z-[100]">
         <Loader2 size={40} class="text-nord-primary animate-spin mb-4" />
         <div class="text-nord-light text-sm animate-pulse">{appState.status}</div>
       </div>
     {/if}
 
-    <!-- CONTENT -->
-    {#if appState.activeTab === 'chat'}
+    <!-- 
+      LOGIKA LAYER (Z-INDEX):
+      - Graph: z-10 (Paling Bawah)
+      - Chat: z-20 (Di atas Graph)
+      - Settings: z-30 (Paling Atas)
+    -->
+
+    <!-- 1. CHAT VIEW (Z-20) -->
+    <div class={`absolute inset-0 transition-all duration-300 ${appState.activeTab === 'chat' ? 'opacity-100 z-20 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'}`}>
       <ChatView />
-    {:else if appState.activeTab === 'brain'}
+    </div>
+
+    <!-- 2. GRAPH VIEW (Z-10) -->
+    <div class={`absolute inset-0 transition-opacity duration-300 ${appState.activeTab === 'brain' ? 'opacity-100 z-10 visible' : 'opacity-0 z-0 invisible'}`}>
       <GraphView />
-    {:else if appState.activeTab === 'config'}
+    </div>
+
+    <!-- 3. SETTINGS VIEW (Z-30) -->
+    <div class={`absolute inset-0 transition-all duration-300 ${appState.activeTab === 'config' ? 'opacity-100 z-30 pointer-events-auto' : 'opacity-0 z-0 pointer-events-none'}`}>
       <SettingsView />
-    {/if}
+    </div>
+
   </div>
 
-  <!-- FOOTER STATUS -->
+  <!-- FOOTER -->
   <div class="bg-nord-panel text-[10px] text-nord-light px-2 py-1 text-center border-t border-nord-border select-none">
     {appState.status}
   </div>

@@ -1,0 +1,46 @@
+{
+  "extends": "@tsconfig/svelte/tsconfig.json",
+  "compilerOptions": {
+    // --- BASIC SVELTE 5 CONFIG ---
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "checkJs": true,
+    "isolatedModules": true,
+
+    /* --- THE RUST MODE (STRICTNESS OVERLOAD) --- */
+
+    // 1. Fondasi Utama
+    "strict": true, 
+
+    // 2. Array Safety (Wajib untuk Matrix.ts)
+    "noUncheckedIndexedAccess": true,
+
+    // 3. Logical Safety
+    "noImplicitReturns": true,
+
+    // 4. Switch Case Safety
+    "noFallthroughCasesInSwitch": true,
+
+    // 5. OOP Safety (Wajib untuk Custom Node)
+    "noImplicitOverride": true,
+
+    // 6. Data Precision
+    "exactOptionalPropertyTypes": true,
+
+    // 7. Property Access Safety
+    "noPropertyAccessFromIndexSignature": true,
+
+    /* --- VITE COMPATIBILITY (WAJIB ADA) --- */
+    "allowImportingTsExtensions": true,
+    "noEmit": true, // <--- JANGAN LUPA KOMA DI SINI
+
+    /* --- HYBRID ENVIRONMENT (UI + WORKER) --- */
+    // Ini membuat TS mengerti 'document' (UI) DAN 'self/Worker' (Brain) sekaligus.
+    "lib": ["ESNext", "DOM", "DOM.Iterable", "WebWorker"]
+  },
+  "include": ["src/**/*.d.ts", "src/**/*.ts", "src/**/*.js", "src/**/*.svelte"],
+  "exclude": ["node_modules"]
+}

@@ -3,6 +3,7 @@ run = "npm run dev"
 
 [nix]
 channel = "stable-23_11"
+packages = ["zip", "rustup"]
 
 [env]
 VITE_PORT = "3000"
@@ -14,6 +15,10 @@ externalPort = 80
 [[ports]]
 localPort = 3001
 externalPort = 3001
+
+[[ports]]
+localPort = 4173
+externalPort = 3000
 
 [agent]
 expertMode = true

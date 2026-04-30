@@ -1,6 +1,16 @@
-import { generateText } from '../utils/ai.js';
+// src/workers/handlers/action.ts
+import { generateText } from '../utils/ai';
 
-export async function handleActionNode({ input, nodeData, apiKey }) {
+interface ActionInput {
+  input: string;
+  apiKey: string;
+  nodeData: {
+    model?: string;
+    prompt?: string;
+  };
+}
+
+export async function handleActionNode({ input, nodeData, apiKey }: ActionInput) {
   if (!apiKey) throw new Error("MISSING API KEY");
 
   const model = nodeData?.model || "gemini-2.5-flash";
@@ -11,6 +21,6 @@ export async function handleActionNode({ input, nodeData, apiKey }) {
 
   // Panggil utility
   const reply = await generateText(model, finalMsg, apiKey);
-  
+
   return { success: true, reply };
 }

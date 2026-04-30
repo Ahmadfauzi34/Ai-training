@@ -1,8 +1,20 @@
-import { getEmbedding, cosineSimilarity, generateText } from '../utils/ai.js';
+// src/workers/handlers/rag.ts
+import { getEmbedding, cosineSimilarity, generateText } from '../utils/ai';
 
-// --- FUNGSI 1: STANDALONE RAG (Opsional) ---
-// Dipakai jika kamu mau Node Memory langsung menjawab (gaya lama).
-export async function handleRagNode({ input, apiKey, knowledgeBase }) {
+// Definisi Dokumen Vector (Sesuai dengan yang disimpan di Dexie)
+interface VectorDoc {
+  text: string;
+  embedding: number[];
+}
+
+interface RagInput {
+  input: string;
+  apiKey: string;
+  knowledgeBase: VectorDoc[];
+}
+
+// --- FUNGSI 1: STANDALONE RAG ---
+export async function handleRagNode({ input, apiKey, knowledgeBase }: RagInput) {
   if (!apiKey) throw new Error("MISSING API KEY");
 
   const userVector = await getEmbedding(input, apiKey);
@@ -26,10 +38,7 @@ export async function handleRagNode({ input, apiKey, knowledgeBase }) {
 }
 
 // --- FUNGSI 2: RETRIEVE ONLY (PIPELINE MODE) ---
-// ✅ INI YANG KITA PAKAI UNTUK GRAPH WALKER
-// Tugasnya cuma cari data, lalu kembalikan teksnya ke ChatView.
-// ChatView nanti yang akan bawa teks ini ke AI Node.
-export async function retrieveContext({ input, apiKey, knowledgeBase }) {
+export async function retrieveContext({ input, apiKey, knowledgeBase }: RagInput) {
   if (!apiKey) throw new Error("MISSING API KEY");
 
   // 1. Embed Pertanyaan
@@ -37,7 +46,7 @@ export async function retrieveContext({ input, apiKey, knowledgeBase }) {
 
   // 2. Cek Memory
   if (!knowledgeBase || knowledgeBase.length === 0) {
-    return { success: true, context: "" }; // Balikin kosong kalau gak ada data
+    return { success: true, context: "" }; 
   }
 
   // 3. Hitung Skor Kemiripan
@@ -49,11 +58,8 @@ export async function retrieveContext({ input, apiKey, knowledgeBase }) {
   // 4. Ambil Top 3 Relevan
   scoredDocs.sort((a, b) => b.score - a.score);
 
-  // (Opsional) Filter yang skornya terlalu rendah biar gak halu
-  // const relevantDocs = scoredDocs.filter(d => d.score > 0.5); 
-
   const topContext = scoredDocs.slice(0, 3).map(d => d.text).join("\n---\n");
 
-  // 5. KEMBALIKAN KONTEKS SAJA (Bukan Jawaban AI)
+  // 5. KEMBALIKAN KONTEKS SAJA
   return { success: true, context: topContext };
 }

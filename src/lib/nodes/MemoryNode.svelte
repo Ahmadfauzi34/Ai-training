@@ -1,44 +1,48 @@
 <script>
-  import { Handle, Position } from '@xyflow/svelte';
+  // 1. Import useSvelteFlow
+  import { useSvelteFlow, Handle, Position } from '@xyflow/svelte';
   import { BrainCircuit, Save, Check } from 'lucide-svelte';
-  import { askBrain } from '../brain.js';
+  import { askBrain } from '../brain.ts';
   import { storage } from '../storage.js';
+  import { appState } from '../state.svelte.ts';
 
-  let { data } = $props();
+  // 2. Terima 'id' dari props (Penting untuk updateNodeData)
+  let { id, data, isConnectable } = $props();
 
-  let inputText = $state(data.text || '');
+  // 3. Ambil fungsi update dari hook
+  const { updateNodeData } = useSvelteFlow();
+
   let isProcessing = $state(false);
-  let status = $state('idle'); // idle, saving, saved, error
+  let status = $state('idle'); 
 
-  // Fungsi: Minta Worker bikin Vector, lalu simpan ke Dexie
+  // Fungsi Handler Input yang Aman
+  function handleInput(e) {
+    const newValue = e.target.value;
+
+    // A. Update Data via Svelte Flow (Legal Way)
+    updateNodeData(id, { text: newValue });
+
+    // B. Trigger Auto-Save
+    appState.lastChange = Date.now();
+  }
+
   async function learnData() {
-    if (!inputText.trim()) return;
-
+    if (!data.text || !data.text.trim()) return; 
     isProcessing = true;
     status = 'saving';
-
     try {
+      // ... (logika sama) ...
       const apiKey = localStorage.getItem('gemini_key');
       if (!apiKey) throw new Error("API Key belum diisi di Config!");
 
-      // 1. Minta Worker buatkan Vector (Embedding)
-      const res = await askBrain('/embed', 'POST', { 
-        text: inputText,
-        apiKey 
-      });
-
+      const res = await askBrain('/embed', 'POST', { text: data.text, apiKey });
       if (res.error) throw new Error(res.message);
 
-      // 2. Simpan Teks + Vector ke Dexie
-      // Kita pakai ID unik biar bisa ditumpuk banyak ingatan
       const memoryId = crypto.randomUUID();
-      await storage.saveVector(memoryId, inputText, res.vector);
+      await storage.saveVector(memoryId, data.text, res.vector);
 
-      // Update UI
-      data.text = inputText; // Simpan teks di node biar gak hilang visualnya
       status = 'saved';
       setTimeout(() => status = 'idle', 2000);
-
     } catch (e) {
       alert(`Gagal belajar: ${e.message}`);
       status = 'error';
@@ -50,7 +54,6 @@
 
 <div class="shadow-xl rounded-lg border-2 border-nord-warning bg-nord-panel w-64 transition-all duration-300">
 
-  <!-- Header -->
   <div class="flex items-center gap-2 p-2 bg-nord-dark rounded-t-md border-b border-nord-border">
     <div class="p-1 bg-nord-warning text-nord-bg rounded">
       <BrainCircuit size={14} />
@@ -58,14 +61,20 @@
     <div class="text-xs font-bold text-nord-text">Long-Term Memory</div>
   </div>
 
-  <Handle type="target" position={Position.Top} class="!bg-nord-warning !w-4 !h-4" />
+  <Handle type="target" position={Position.Left} isConnectable={isConnectable} class="!bg-nord-warning !w-3 !h-6 !rounded-sm !border-none -ml-1.5 z-50" />
 
-  <!-- Body -->
   <div class="p-3 space-y-2">
     <div class="text-[9px] text-nord-light uppercase font-mono">Pengetahuan Dasar:</div>
 
+    <!-- 
+      PERBAIKAN DI SINI:
+      1. Hapus bind:value
+      2. Gunakan value={data.text} (One-way)
+      3. Gunakan oninput={handleInput} (Update via function)
+    -->
     <textarea 
-      bind:value={inputText}
+      value={data.text} 
+      oninput={handleInput}
       class="nodrag w-full bg-nord-bg border border-nord-border rounded text-xs text-nord-text p-2 h-24 outline-none focus:border-nord-warning resize-none"
       placeholder="Contoh: Kode rahasia brankas adalah 9988..."
     ></textarea>
@@ -86,5 +95,5 @@
     </button>
   </div>
 
-  <Handle type="source" position={Position.Bottom} class="!bg-nord-warning !w-4 !h-4" />
+  <Handle type="source" position={Position.Right} isConnectable={isConnectable} class="!bg-nord-warning !w-3 !h-6 !rounded-sm !border-none -mr-1.5 z-50" />
 </div>
