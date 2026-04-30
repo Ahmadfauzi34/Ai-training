@@ -28,18 +28,11 @@ export interface MatrixNodeData extends BaseNodeData {
   operation?: 'add' | 'multiply' | 'subtract' | 'transpose' | 'normalize';
 }
 
-// 👇 1. TAMBAHAN BARU: Data untuk TensorFlow Node
-export interface TFNodeData extends BaseNodeData {
-  operation: 'matmul' | 'add' | 'relu' | 'sigmoid';
-  // Nanti bisa tambah: units, kernelSize, filters, dll.
-}
-
 export type AppNodeData = 
   | InputNodeData 
   | ActionNodeData 
   | MemoryNodeData 
-  | MatrixNodeData
-  | TFNodeData; // <-- Masukkan ke Union
+  | MatrixNodeData;
 
 // --- NODE INTERFACES ---
 export interface BaseNode {
@@ -60,13 +53,8 @@ export interface ActionNode extends BaseNode { type: 'action'; data: ActionNodeD
 export interface MemoryNode extends BaseNode { type: 'rag_memory'; data: MemoryNodeData; }
 export interface MathNode extends BaseNode { type: 'math_op'; data: MatrixNodeData; }
 
-// 👇 2. TAMBAHAN BARU: Interface Node TF
-export interface TFNode extends BaseNode { type: 'tf_op'; data: TFNodeData; }
-
-// 👇 3. UPDATE GLOBAL UNION
 export type AppNode = 
   | InputNode 
   | ActionNode 
   | MemoryNode 
-  | MathNode 
-  | TFNode; // <-- Masukkan ke sini
+  | MathNode;

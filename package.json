@@ -9,8 +9,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@tensorflow/tfjs": "^4.22.0",
-    "@tensorflow/tfjs-backend-wasm": "^4.22.0",
     "@xyflow/svelte": "^1.5.0",
     "agent-v76-svelte": "file:",
     "clsx": "latest",
