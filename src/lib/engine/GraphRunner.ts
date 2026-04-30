@@ -4,7 +4,6 @@ import { executeRag } from './handlers/RagHandler';
 import { executeAction } from './handlers/ActionHandler';
 import { executeMath } from './handlers/MathHandler';
 import { appState } from '../state.svelte'; 
-import { executeTF } from './handlers/TFHandler'; 
 
 import type { 
   AppNode, 
@@ -26,8 +25,7 @@ type NodeHandler = (
 const HANDLERS: Record<string, NodeHandler> = {
   'rag_memory': executeRag as unknown as NodeHandler,
   'action': executeAction as unknown as NodeHandler,
-  'math_op': executeMath as unknown as NodeHandler, 
-'tf_op': executeTF as unknown as NodeHandler 
+  'math_op': executeMath as unknown as NodeHandler
 
 };
 

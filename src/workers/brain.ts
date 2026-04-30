@@ -1,7 +1,5 @@
 // src/workers/brain.ts
 import { Hono } from 'hono';
-import * as tf from '@tensorflow/tfjs';
-import { setWasmPaths } from '@tensorflow/tfjs-backend-wasm';
 
 import { getEmbedding } from './utils/ai';
 import { handleActionNode } from './handlers/action';
@@ -11,22 +9,6 @@ const app = new Hono();
 
 console.log("⚙️ Worker Brain: Starting (Pipeline Mode)...");
 
-// --- 1. SETUP TENSORFLOW WASM ---
-const initTF = async () => {
-  console.log("⚙️ TF.js: Initializing WASM Backend...");
-
-  // Arahkan ke folder public tempat kita copy file .wasm tadi
-  setWasmPaths('/tfjs-wasm/'); 
-
-  await tf.setBackend('wasm');
-  await tf.ready();
-
-  console.log(`🚀 TF.js Ready! Backend: ${tf.getBackend()}`);
-};
-
-// Jalankan Init (Fire and Forget)
-initTF();
-
 app.onError((err, c) => {
   console.error('🔥 WORKER ERROR:', err);
   return c.json({ error: true, message: err.message || 'Internal Error' }, 500);
@@ -34,64 +16,9 @@ app.onError((err, c) => {
 
 app.get('/', (c) => c.json({ 
   status: 'ONLINE', 
-  engine: 'Hono Modular + TF.js',
-  backend: tf.getBackend() 
+  engine: 'Hono Modular',
 }));
 
-// --- 2. ROUTE BARU: TENSORFLOW ENGINE ---
-app.post('/tf/run', async (c) => {
-  try {
-    // Terima payload: op, a, b, shapeA, shapeB
-    const body = await c.req.json<{ 
-      op: string; 
-      a: number[]; 
-      b?: number[]; 
-      shapeA: [number, number]; 
-      shapeB?: [number, number];
-    }>();
-
-    // tf.tidy() = Garbage Collector Otomatis! 
-    // Mencegah memory leak di WASM
-    const resultData = tf.tidy(() => {
-
-      // Reconstruct Tensor A
-      const tensorA = tf.tensor(body.a, body.shapeA);
-      let result: tf.Tensor;
-
-      // Eksekusi Operasi
-      if (body.op === 'matmul') {
-        if (!body.b || !body.shapeB) throw new Error("MatMul butuh input B");
-        const tensorB = tf.tensor(body.b, body.shapeB);
-        result = tensorA.matMul(tensorB);
-      } 
-      else if (body.op === 'add') {
-        if (!body.b || !body.shapeB) throw new Error("Add butuh input B");
-        const tensorB = tf.tensor(body.b, body.shapeB);
-        result = tensorA.add(tensorB);
-      }
-      else if (body.op === 'relu') {
-        result = tensorA.relu();
-      }
-      else if (body.op === 'sigmoid') {
-        result = tensorA.sigmoid();
-      }
-      else {
-        throw new Error(`Operasi TF '${body.op}' belum didukung.`);
-      }
-
-      // Kembalikan Data Mentah (Array) & Shape
-      return {
-        data: Array.from(result.dataSync()),
-        shape: result.shape
-      };
-    });
-
-    return c.json({ success: true, result: resultData });
-
-  } catch (e: any) {
-    return c.json({ error: true, message: e.message }, 500);
-  }
-});
 
 // --- ROUTE LAMA (RAG & AI) ---
 
