@@ -8,13 +8,28 @@
 
   let expanded = $state(false);
 
-  // 1. FIX REACTIVITY: Gunakan state lokal + effect
   let rawInput = $state('');
 
+  function parseNumbers(text) {
+    return text
+      .split(/[\s,]+/)
+      .filter(s => s.trim() !== '')
+      .map(Number)
+      .filter(n => !isNaN(n));
+  }
+
   // Sinkronisasi: Jika data dari luar berubah, update input lokal
+  // Kita hanya update rawInput jika secara matematis nilainya berbeda
+  // Ini mencegah kursor melompat dan hilangnya karakter pemisah (koma/spasi) saat mengetik
   $effect(() => {
-    if (data.defaultValue) {
-      rawInput = data.defaultValue.join(', ');
+    const externalValues = data.defaultValue || [];
+    const currentValues = parseNumbers(rawInput);
+
+    const isDifferent = currentValues.length !== externalValues.length ||
+                        currentValues.some((v, i) => v !== externalValues[i]);
+
+    if (isDifferent) {
+      rawInput = externalValues.join(', ');
     }
   });
 
@@ -31,12 +46,7 @@
     const text = e.target.value;
     rawInput = text; // Update UI lokal langsung biar responsif
 
-    const numberArray = text
-      .split(/[\s,]+/)
-      .filter(s => s.trim() !== '')
-      .map(Number)
-      .filter(n => !isNaN(n));
-
+    const numberArray = parseNumbers(text);
     updateNodeData(id, { defaultValue: numberArray });
     appState.lastChange = Date.now();
   }
@@ -57,6 +67,7 @@
     <button 
       onclick={() => expanded = !expanded}
       class="text-nord-light hover:text-nord-primary transition cursor-pointer"
+      aria-label={expanded ? 'Collapse settings' : 'Expand settings'}
     >
       {#if expanded} <ChevronUp size={14} /> {:else} <Settings size={14} /> {/if}
     </button>
@@ -75,7 +86,6 @@
     {#if expanded}
       <div class="space-y-3 animate-in slide-in-from-top-2 duration-200">
 
-        <!-- 2. FIX A11Y: Tambahkan ID unik dan FOR -->
         <div>
           <label for={`op-${id}`} class="text-[9px] font-mono text-nord-light uppercase block mb-1">Operation</label>
           <select 
