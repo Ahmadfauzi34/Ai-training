@@ -33,11 +33,13 @@ export class GraphRunner {
   nodes: AppNode[];
   edges: AppEdge[];
   onLog: LoggerFunction;
+  tensorRegistry: Map<NodeId, any>;
 
   constructor(nodes: AppNode[], edges: AppEdge[]) {
     this.nodes = nodes;
     this.edges = edges;
     this.onLog = (role: LogRole, text: string) => console.log(`[${role}] ${text}`);
+    this.tensorRegistry = new Map();
   }
 
   setLogger(fn: LoggerFunction) { 
@@ -67,7 +69,7 @@ export class GraphRunner {
 
       // Inisialisasi Map
       nodeResults: new Map(),
-      tensorRegistry: new Map(),
+      tensorRegistry: this.tensorRegistry,
 
       // Snapshot Graph
       graph: {
