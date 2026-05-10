@@ -1,0 +1,3 @@
+## 2024-05-10 - Chat Input Accessibility & UX
+**Learning:** Icon-only buttons (like the send button in the chat) are inaccessible to screen readers without an explicit `aria-label`. Additionally, text inputs benefit from `aria-label` for proper context. Providing visual feedback for the button's disabled state when the input is empty improves usability, preventing users from clicking it and wondering why nothing happens.
+**Action:** Always add `aria-label` to icon-only buttons and form inputs. Implement disabled states with visual cues (`opacity-50`, `cursor-not-allowed`) for buttons that require input validation to prevent confusion.
