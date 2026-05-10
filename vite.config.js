@@ -12,9 +12,8 @@ export default defineConfig({
     format: 'es' 
   },
   server: {
-    host: '0.0.0.0',
-    port: 3000,
-    strictPort: true,
-    allowedHosts: true
+    host: process.env.VITE_HOST || 'localhost',
+    port: process.env.VITE_PORT ? parseInt(process.env.VITE_PORT) : 3000,
+    strictPort: true
   }
 })
