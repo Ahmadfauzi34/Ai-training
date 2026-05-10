@@ -55,11 +55,16 @@
   <!-- AREA INPUT -->
   <form onsubmit={(e) => { e.preventDefault(); sendMessage(); }} class="flex gap-2">
     <input 
+      aria-label="Ketik pesan Anda"
       bind:value={appState.input}
       class="flex-1 bg-nord-panel border border-nord-border rounded px-4 py-3 outline-none focus:border-nord-primary transition text-sm text-nord-text"
       placeholder="Tanya Hono..."
     />
-    <button type="submit" class="bg-nord-primary text-nord-bg p-3 rounded hover:opacity-90 cursor-pointer">
+    <button
+      type="submit"
+      disabled={!appState.input.trim()}
+      aria-label="Kirim pesan"
+      class="bg-nord-primary text-nord-bg p-3 rounded hover:opacity-90 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed transition-opacity">
       <Send size={20} />
     </button>
   </form>
