@@ -85,7 +85,6 @@ export class GraphRunner {
 
     let queue: AppNode[] = [startNode];
     let visited = new Set<NodeId>([startNode.id]);
-    let deferredAiNode: ActionNode | null = null; 
 
     this.onLog('system', '🌊 Engine: Memulai penelusuran...');
 
@@ -93,37 +92,36 @@ export class GraphRunner {
       const currentNode = queue.shift(); 
       if (!currentNode) continue; 
 
-      // LOGIKA 1: Tahan AI Node
-      if (currentNode.type === 'action') {
-        deferredAiNode = currentNode as ActionNode;
-      } 
-      // LOGIKA 2: Jalankan Handler Lain
-      else {
-        const handler = HANDLERS[currentNode.type];
-        if (handler) {
-          const result = await handler(currentNode, context, this.onLog);
+      // Jalankan Handler Node saat ini
+      const handler = HANDLERS[currentNode.type];
+      if (handler) {
+        const result = await handler(currentNode, context, this.onLog);
 
-          // Simpan Hasil ke Context & State Global (Visualisasi)
-          if (result !== undefined) {
-            context.nodeResults.set(currentNode.id, result);
-            appState.executionResults[currentNode.id] = result; // Update UI
+        // Simpan Hasil ke Context & State Global (Visualisasi)
+        if (result !== undefined) {
+          context.nodeResults.set(currentNode.id, result);
+          appState.executionResults[currentNode.id] = result; // Update UI
 
-            // Legacy RAG support
-            if (typeof result === 'string' && result) {
-              context.accumulatedData += result;
-            }
-
-            // Contoh Emit Event RxJS (Opsional)
-            context.events$.next({
-              type: 'LOG',
-              nodeId: currentNode.id,
-              payload: 'Node Executed'
-            });
+          // Jika node action mengembalikan string (balasan), atau RAG, tambahkan ke accumulatedData
+          // untuk Node AI berikutnya
+          if (typeof result === 'string' && result) {
+             // Beri pembatas jika sudah ada isinya
+             if (context.accumulatedData) {
+               context.accumulatedData += "\n\n---\n\n";
+             }
+             context.accumulatedData += result;
           }
+
+          // Emit Event RxJS
+          context.events$.next({
+            type: 'LOG',
+            nodeId: currentNode.id,
+            payload: 'Node Executed'
+          });
         }
       }
 
-      // LOGIKA 3: Traversal
+      // Lanjut ke tetangga (Traversal)
       const outgoingEdges = this.edges.filter(e => e.source === currentNode.id);
 
       for (const edge of outgoingEdges) {
@@ -134,11 +132,6 @@ export class GraphRunner {
           queue.push(nextNode);
         }
       }
-    }
-
-    // EKSEKUSI FINAL AI
-    if (deferredAiNode) {
-      await executeAction(deferredAiNode, context, this.onLog);
     }
 
     // Selesai: Complete Stream

@@ -47,7 +47,9 @@ export async function executeAction(
 
   if (res.error) {
     logger('system', `❌ Error: ${res.message}`);
+    return;
   } else {
     logger('ai', res.reply || "...");
+    return res.reply; // Kembalikan nilai string reply agar bisa jadi accumulatedData (Chaining)
   }
 }
