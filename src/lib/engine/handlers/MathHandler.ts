@@ -12,8 +12,6 @@ export async function executeMath(
   const op = node.data.operation || 'multiply';
 
   // 1. Inisialisasi Registry
-  // (Gunakan nodeResults atau tensorRegistry sesuai setup terakhirmu)
-  // Disini kita pakai nodeResults agar konsisten dengan IO
   if (!context.nodeResults) {
     context.nodeResults = new Map();
   }
@@ -24,10 +22,18 @@ export async function executeMath(
     const rows = node.data.rows || 1;
     const cols = node.data.cols || defaultVals.length;
 
-    const mat = new Matrix(rows, cols);
+    // Zero Allocation Mode: Re-use Matrix if exists and dimensions match
+    let mat = context.tensorRegistry?.get(node.id);
+    if (!mat || mat.rows !== rows || mat.cols !== cols) {
+      mat = new Matrix(rows, cols);
+      if (context.tensorRegistry) {
+        context.tensorRegistry.set(node.id, mat);
+      }
+    }
+
     mat.data.set(defaultVals);
 
-    logger('engine', `🧮 Math: Generator [${rows}x${cols}] created.`);
+    logger('engine', `🧮 Math: Generator [${rows}x${cols}] reused/created.`);
     return mat; 
   }
 
@@ -49,28 +55,56 @@ export async function executeMath(
   const matB = matrixInputs[1];
 
   let result: Matrix | null = null;
+  // Get pre-allocated result matrix from registry if it exists
+  let outMat = context.tensorRegistry?.get(node.id);
 
   try {
     if (op === 'transpose') {
       // Validasi Khusus Transpose (Cukup 1 input)
       if (!matA) throw new Error("Butuh minimal 1 input untuk transpose.");
-      result = matA.transpose();
+
+      // Ensure outMat has correct dimensions, otherwise clear it to allocate a new one
+      if (outMat && (outMat.rows !== matA.cols || outMat.cols !== matA.rows)) {
+        outMat = undefined;
+      }
+
+      result = matA.transpose(outMat);
     }
     else if (op === 'multiply') {
       // Validasi Khusus Binary Ops (Butuh 2 input)
       if (!matA || !matB) throw new Error("Butuh 2 input (A & B) untuk perkalian.");
-      result = Matrix.multiply(matA, matB);
+
+      if (outMat && (outMat.rows !== matA.rows || outMat.cols !== matB.cols)) {
+        outMat = undefined;
+      }
+
+      result = Matrix.multiply(matA, matB, outMat);
     }
     else if (op === 'add') {
       if (!matA || !matB) throw new Error("Butuh 2 input untuk penjumlahan.");
-      result = Matrix.add(matA, matB);
+
+      if (outMat && (outMat.rows !== matA.rows || outMat.cols !== matA.cols)) {
+        outMat = undefined;
+      }
+
+      result = Matrix.add(matA, matB, outMat);
     }
     else if (op === 'subtract') {
       if (!matA || !matB) throw new Error("Butuh 2 input untuk pengurangan.");
-      result = Matrix.subtract(matA, matB);
+
+      if (outMat && (outMat.rows !== matA.rows || outMat.cols !== matA.cols)) {
+        outMat = undefined;
+      }
+
+      result = Matrix.subtract(matA, matB, outMat);
     }
     else {
       throw new Error(`Operasi '${op}' belum didukung.`);
+    }
+
+    // Store back into registry for next run
+    if (result && context.tensorRegistry && result !== outMat) {
+       context.tensorRegistry.set(node.id, result);
     }
 
     if (result) {
