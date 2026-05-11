@@ -86,6 +86,9 @@ export class GraphRunner {
     let queue: AppNode[] = [startNode];
     let visited = new Set<NodeId>([startNode.id]);
 
+    // Optimisasi: Pre-compute map untuk node lookup (O(1) vs O(N))
+    const nodeMap = new Map(this.nodes.map(n => [n.id, n]));
+
     this.onLog('system', '🌊 Engine: Memulai penelusuran...');
 
     while (queue.length > 0) {
@@ -125,7 +128,7 @@ export class GraphRunner {
       const outgoingEdges = this.edges.filter(e => e.source === currentNode.id);
 
       for (const edge of outgoingEdges) {
-        const nextNode = this.nodes.find(n => n.id === edge.target);
+        const nextNode = nodeMap.get(edge.target);
 
         if (nextNode && !visited.has(nextNode.id)) {
           visited.add(nextNode.id);
