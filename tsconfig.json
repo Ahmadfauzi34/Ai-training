@@ -41,6 +41,6 @@
     // Ini membuat TS mengerti 'document' (UI) DAN 'self/Worker' (Brain) sekaligus.
     "lib": ["ESNext", "DOM", "DOM.Iterable", "WebWorker"]
   },
-  "include": ["src/**/*.d.ts", "src/**/*.ts", "src/**/*.js", "src/**/*.svelte"],
+  "include": ["src/**/*.d.ts", "src/**/*.ts", "src/**/*.js", "src/**/*.svelte", "scripts/**/*.ts"],
   "exclude": ["node_modules"]
 }
