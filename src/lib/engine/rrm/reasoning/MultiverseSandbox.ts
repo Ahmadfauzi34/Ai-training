@@ -1,0 +1,294 @@
+import { EntityManifold } from '../core/EntityManifold.js';
+import { TensorVector, GLOBAL_DIMENSION, MAX_ENTITIES } from '../core/config.js';
+import { FHRR } from '../core/fhrr.js';
+import { CoreSeeds } from '../core/CoreSeeds.js';
+import { AxiomGenerator } from './AxiomGenerator.js';
+import { SwarmDynamics } from './SwarmDynamics.js';
+
+export const MAX_DEPTH = 5;
+export const MAX_BRANCHES = 4;
+export const UNIVERSE_COUNT = MAX_DEPTH * MAX_BRANCHES;
+
+/**
+ * ============================================================================
+ * MULTIVERSE SANDBOX (MCTS Kuantum / Deep Active Inference)
+ * ============================================================================
+ * Alih-alih membuat `EntityManifold` baru, kita membagi Float32Array raksasa
+ * menjadi "Alam Semesta Paralel" yang bisa disalin (memcpy) dalam hitungan µs.
+ */
+export class MultiverseSandbox {
+    // === MULTIVERSE BUFFERS (SOA Raksasa) ===
+    private mvTensors: Float32Array;
+    private mvMasses: Float32Array;
+    private mvTokens: Float32Array;
+    private mvSpansX: Float32Array;
+    private mvSpansY: Float32Array;
+    private mvCentersX: Float32Array;
+    private mvCentersY: Float32Array;
+    private mvMomentumsX: Float32Array;
+    private mvMomentumsY: Float32Array;
+    private mvEntanglementStatus: Float32Array;
+
+    // Array non-typed
+    private mvIds: string[][];
+    private mvActiveCount: number[];
+    private mvGlobalWidth: number[];
+    private mvGlobalHeight: number[];
+
+    // Virtual Manifold View untuk memudahkan parsing & perhitungan
+    private universeViews: EntityManifold[];
+
+    constructor() {
+        const totalEntities = UNIVERSE_COUNT * MAX_ENTITIES;
+        const totalTensorSize = UNIVERSE_COUNT * MAX_ENTITIES * GLOBAL_DIMENSION;
+
+        this.mvTensors = new Float32Array(totalTensorSize);
+        this.mvMasses = new Float32Array(totalEntities);
+        this.mvTokens = new Float32Array(totalEntities);
+        this.mvSpansX = new Float32Array(totalEntities);
+        this.mvSpansY = new Float32Array(totalEntities);
+        this.mvCentersX = new Float32Array(totalEntities);
+        this.mvCentersY = new Float32Array(totalEntities);
+        this.mvMomentumsX = new Float32Array(totalEntities);
+        this.mvMomentumsY = new Float32Array(totalEntities);
+        this.mvEntanglementStatus = new Float32Array(totalEntities);
+
+        this.mvIds = Array.from({ length: UNIVERSE_COUNT }, () => Array(MAX_ENTITIES).fill(""));
+        this.mvActiveCount = Array(UNIVERSE_COUNT).fill(0);
+        this.mvGlobalWidth = Array(UNIVERSE_COUNT).fill(1);
+        this.mvGlobalHeight = Array(UNIVERSE_COUNT).fill(1);
+
+        this.universeViews = [];
+
+        // Membangun View (Jendela Pointer O(1)) untuk setiap Alam Semesta
+        for (let u = 0; u < UNIVERSE_COUNT; u++) {
+            const eOffset = u * MAX_ENTITIES;
+            const tOffset = u * MAX_ENTITIES * GLOBAL_DIMENSION;
+
+            const view = new EntityManifold();
+            // Override pre-allocated arrays dengan subarray() agar menunjuk ke Multiverse Buffer
+            view.tensors = this.mvTensors.subarray(tOffset, tOffset + MAX_ENTITIES * GLOBAL_DIMENSION);
+            view.masses = this.mvMasses.subarray(eOffset, eOffset + MAX_ENTITIES);
+            view.tokens = this.mvTokens.subarray(eOffset, eOffset + MAX_ENTITIES);
+            view.spansX = this.mvSpansX.subarray(eOffset, eOffset + MAX_ENTITIES);
+            view.spansY = this.mvSpansY.subarray(eOffset, eOffset + MAX_ENTITIES);
+            view.centersX = this.mvCentersX.subarray(eOffset, eOffset + MAX_ENTITIES);
+            view.centersY = this.mvCentersY.subarray(eOffset, eOffset + MAX_ENTITIES);
+            view.momentumsX = this.mvMomentumsX.subarray(eOffset, eOffset + MAX_ENTITIES);
+            view.momentumsY = this.mvMomentumsY.subarray(eOffset, eOffset + MAX_ENTITIES);
+            view.entanglementStatus = this.mvEntanglementStatus.subarray(eOffset, eOffset + MAX_ENTITIES);
+
+            view.ids = this.mvIds[u]!;
+
+            this.universeViews.push(view);
+        }
+    }
+
+    public getUniverse(universeId: number): EntityManifold {
+        const view = this.universeViews[universeId]!;
+        view.activeCount = this.mvActiveCount[universeId]!;
+        view.globalWidth = this.mvGlobalWidth[universeId]!;
+        view.globalHeight = this.mvGlobalHeight[universeId]!;
+        return view;
+    }
+
+    /**
+     * ⚡ THE MULTIVERSE MEMCPY (Zero GC) ⚡
+     * Menyalin State dari satu Manifold (bisa dari realWorld atau universe lain)
+     * ke dalam Universe ID tertentu di Multiverse secara instan.
+     */
+    public cloneToUniverse(source: EntityManifold, targetUniverseId: number): void {
+        const targetView = this.universeViews[targetUniverseId]!;
+
+        targetView.tensors.set(source.tensors);
+        targetView.masses.set(source.masses);
+        targetView.tokens.set(source.tokens);
+        targetView.spansX.set(source.spansX);
+        targetView.spansY.set(source.spansY);
+        targetView.centersX.set(source.centersX);
+        targetView.centersY.set(source.centersY);
+        targetView.momentumsX.set(source.momentumsX);
+        targetView.momentumsY.set(source.momentumsY);
+        targetView.entanglementStatus.set(source.entanglementStatus);
+
+        for (let i = 0; i < source.activeCount; i++) {
+            targetView.ids[i] = source.ids[i]!;
+        }
+
+        this.mvActiveCount[targetUniverseId] = source.activeCount;
+        this.mvGlobalWidth[targetUniverseId] = source.globalWidth;
+        this.mvGlobalHeight[targetUniverseId] = source.globalHeight;
+
+        targetView.activeCount = source.activeCount;
+        targetView.globalWidth = source.globalWidth;
+        targetView.globalHeight = source.globalHeight;
+    }
+
+    /**
+     * Terapkan aksioma (misal: Axiom Translasi/Mutasi) ke Universe tertentu.
+     * Menerapkan Multi-Tier Physics Engine untuk komputasi asimetris O(1) -> O(N).
+     */
+    public applyAxiom(universeId: number, axiomVector: TensorVector, deltaX: number, deltaY: number, physicsTier: number = 0): void {
+        const u = this.getUniverse(universeId);
+
+        // PENGAMANAN ALIGNMENT (Konversi Piksel Absolut -> Koordinat Relatif)
+        // deltaX dan deltaY dari TopologicalAligner adalah piksel absolut (misal: +2 piksel).
+        // Sedangkan centersX dan centersY adalah koordinat relatif (0.0 - 1.0).
+        const relDeltaX = deltaX / Math.max(1, u.globalWidth - 1);
+        const relDeltaY = deltaY / Math.max(1, u.globalHeight - 1);
+
+        switch (physicsTier) {
+            case 2: // SWARM TIER (Granular/Fluid)
+                // Implementasi SwarmDynamics sudah menggunakan resolusi piksel absolut di dalamnya,
+                // tapi pusatnya (centersX/Y) perlu update relatif jika kita ubah.
+                // Namun, karena `applySwarmGravity` memutasi centersX/Y sebagai nilai relatif di akhir iterasi pikselnya,
+                // kita pass nilai absolut deltaX/deltaY as is.
+                SwarmDynamics.applySwarmGravity(u, deltaX, deltaY);
+                break;
+
+            case 1: // DOMINO TIER (Chain Reaction)
+                this.applyDominoPhysics(u, axiomVector, deltaX, deltaY, relDeltaX, relDeltaY);
+                break;
+
+            case 0: // INSTANT TIER (Teleportasi Murni 0ms)
+            default:
+                for (let e = 0; e < u.activeCount; e++) {
+                    if (u.masses[e] === 0.0) continue;
+
+                    // Tensor Binding (Mutasi Warna & Translasi Spasial)
+                    const entityTensor = u.getTensor(e);
+                    const futureState = FHRR.bind(entityTensor, axiomVector);
+                    entityTensor.set(futureState);
+
+                    // Skalar Update (Instant 0ms tanpa tabrakan) menggunakan Relative Delta
+                    u.centersX[e]! += relDeltaX;
+                    u.centersY[e]! += relDeltaY;
+                }
+                break;
+        }
+    }
+
+    /**
+     * Fisika Efek Domino (Entanglement / Collision Detection).
+     * Mengecek dan menjerat entitas lain jika saling bertabrakan saat translasi.
+     */
+    private _sharedMovedEntitiesBuffer = new Int32Array(MAX_ENTITIES);
+
+    private applyDominoPhysics(u: EntityManifold, axiomVector: TensorVector, deltaX: number, deltaY: number, relDeltaX: number, relDeltaY: number): void {
+        const width = u.globalWidth;
+        const height = u.globalHeight;
+
+        let movedCount = 0;
+        const movedEntities = this._sharedMovedEntitiesBuffer;
+
+        for (let e = 0; e < u.activeCount; e++) {
+            if (u.masses[e] === 0.0) continue;
+
+            const entityTensor = u.getTensor(e);
+            const futureState = FHRR.bind(entityTensor, axiomVector);
+            entityTensor.set(futureState);
+
+            if (deltaX !== 0.0 || deltaY !== 0.0) {
+                u.centersX[e]! += relDeltaX;
+                u.centersY[e]! += relDeltaY;
+                movedEntities[movedCount++] = e; // True Zero-GC
+            }
+        }
+
+        // Pengecekan Tabrakan (AABB Collision) & Transfer Entanglement
+        for (let m = 0; m < movedCount; m++) {
+            const e1 = movedEntities[m]!;
+
+            const cX1 = u.centersX[e1]! * (width - 1);
+            const cY1 = u.centersY[e1]! * (height - 1);
+            const spanX1 = u.spansX[e1]!;
+            const spanY1 = u.spansY[e1]!;
+
+            const rx1 = spanX1 / 2.0;
+            const ry1 = spanY1 / 2.0;
+
+            for (let e2 = 0; e2 < u.activeCount; e2++) {
+                if (e1 === e2 || u.masses[e2] === 0.0) continue;
+
+                const cX2 = u.centersX[e2]! * (width - 1);
+                const cY2 = u.centersY[e2]! * (height - 1);
+                const spanX2 = u.spansX[e2]!;
+                const spanY2 = u.spansY[e2]!;
+
+                const rx2 = spanX2 / 2.0;
+                const ry2 = spanY2 / 2.0;
+
+                const overlapX = (rx1 + rx2) - Math.abs(cX1 - cX2);
+                const overlapY = (ry1 + ry2) - Math.abs(cY1 - cY2);
+
+                const isColliding = Number(overlapX >= 0 && overlapY >= 0);
+
+                if (isColliding === 1) {
+                    let isAlreadyMoved = false;
+                    for (let k = 0; k < movedCount; k++) {
+                        if (movedEntities[k] === e2) {
+                            isAlreadyMoved = true;
+                            break;
+                        }
+                    }
+
+                    if (!isAlreadyMoved) {
+                        u.entanglementStatus[e2] = 1.0;
+                        u.entanglementStatus[e1] = 1.0;
+
+                        u.centersX[e2]! += relDeltaX;
+                        u.centersY[e2]! += relDeltaY;
+
+                        const dominoShiftTensor = AxiomGenerator.generateTranslationAxiom(
+                            deltaX, deltaY,
+                            CoreSeeds.X_AXIS_SEED, CoreSeeds.Y_AXIS_SEED
+                        );
+
+                        const e2Tensor = u.getTensor(e2);
+                        const futureE2State = FHRR.bind(e2Tensor, dominoShiftTensor);
+                        e2Tensor.set(futureE2State);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * 🧠 KARL FRISTON'S FREE ENERGY EVALUATION 🧠
+     * Seberapa berantakan alam semesta ini jika dibandingkan dengan kenyataan target?
+     */
+    public calculateFreeEnergy(universeId: number, targetReality: EntityManifold): number {
+        const u = this.getUniverse(universeId);
+        let totalSurprise = 0.0;
+        let evaluatedEntities = 0;
+
+        for (let s = 0; s < u.activeCount; s++) {
+            if (u.masses[s] === 0.0) continue;
+
+            const sTensor = u.getTensor(s);
+            // Mencegah NaN pada JS Branchless Math (-Infinity * 0)
+            let bestResonance = -999.0;
+
+            for (let t = 0; t < targetReality.activeCount; t++) {
+                if (targetReality.masses[t] === 0.0) continue;
+
+                const tTensor = targetReality.getTensor(t);
+                const resonance = FHRR.similarity(sTensor, tTensor);
+
+                const isBetter = Number(resonance > bestResonance);
+                bestResonance = (bestResonance * (1 - isBetter)) + (resonance * isBetter);
+            }
+
+            // Jika tidak ada target (bestResonance masih -999), set ke -1 agar surprisenya = 2.0 (Kacau Maksimal)
+            if (bestResonance === -999.0) bestResonance = -1.0;
+
+            const surprise = 1.0 - bestResonance;
+            totalSurprise += surprise;
+            evaluatedEntities++;
+        }
+
+        if (evaluatedEntities === 0) return 1.0;
+
+        return totalSurprise / evaluatedEntities;
+    }
+}

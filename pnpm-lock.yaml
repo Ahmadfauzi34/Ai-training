@@ -20,6 +20,9 @@ importers:
       dexie:
         specifier: ^4.2.1
         version: 4.4.2
+      fft.js:
+        specifier: ^4.0.4
+        version: 4.0.4
       hono:
         specifier: ^4.6.14
         version: 4.12.18
@@ -777,6 +780,9 @@ packages:
     peerDependenciesMeta:
       picomatch:
         optional: true
+
+  fft.js@4.0.4:
+    resolution: {integrity: sha512-f9c00hphOgeQTlDyavwTtu6RiK8AIFjD6+jvXkNkpeQ7rirK3uFWVpalkoS4LAwbdX7mfZ8aoBfFVQX1Re/8aw==}
 
   fsevents@2.3.3:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
@@ -1759,6 +1765,8 @@ snapshots:
   fdir@6.5.0(picomatch@4.0.4):
     optionalDependencies:
       picomatch: 4.0.4
+
+  fft.js@4.0.4: {}
 
   fsevents@2.3.3:
     optional: true

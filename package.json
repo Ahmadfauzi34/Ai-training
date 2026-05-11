@@ -13,6 +13,7 @@
     "agent-v76-svelte": "file:",
     "clsx": "latest",
     "dexie": "^4.2.1",
+    "fft.js": "^4.0.4",
     "hono": "^4.6.14",
     "lucide-svelte": "^0.562.0",
     "rxdb": "latest",
