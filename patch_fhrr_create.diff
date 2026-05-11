@@ -1,0 +1,81 @@
+<<<<<<< SEARCH
+  create: (customSeed?: number): Float32Array => {
+    // DC (0) & Nyquist (N/2) harus Real
+    _sharedcRes[0] = 1.0; _sharedcRes[1] = 0.0;
+    _sharedcRes[DIMENSION] = 1.0; _sharedcRes[DIMENSION + 1] = 0.0;
+
+    // Isi frekuensi dengan fase acak (Unit Magnitude)
+    // Jika customSeed diberikan, ia mereset PRNG agar deterministik sesuai seed
+    if (customSeed !== undefined) seededRandom(customSeed);
+
+    for (let k = 1; k < DIMENSION / 2; k++) {
+      const phase = seededRandom() * Math.PI * 2;
+      const cosP = Math.cos(phase);
+      const sinP = Math.sin(phase);
+
+      // Frekuensi positif
+      _sharedcRes[k * 2] = cosP;
+      _sharedcRes[k * 2 + 1] = sinP;
+
+      // Frekuensi negatif (Conjugate simetri agar hasil IFFT riil)
+      const symK = DIMENSION - k;
+      _sharedcRes[symK * 2] = cosP;
+      _sharedcRes[symK * 2 + 1] = -sinP;
+    }
+
+    fft.inverseTransform(_sharedResArray, _sharedcRes);
+
+    const finalVec = new Float32Array(DIMENSION);
+    let magSq = 0;
+    for(let i = 0; i < DIMENSION; i++) {
+        finalVec[i] = _sharedResArray[i * 2];
+        magSq += finalVec[i] * finalVec[i];
+    }
+
+    // Normalisasi L2 (Math Branchless)
+    const invMag = 1.0 / (Math.sqrt(magSq) + 1e-15);
+    for(let i = 0; i < DIMENSION; i++) finalVec[i] *= invMag;
+
+    return finalVec;
+  },
+=======
+  create: (customSeed?: number, out?: Float32Array): Float32Array => {
+    // DC (0) & Nyquist (N/2) harus Real
+    _sharedcRes[0] = 1.0; _sharedcRes[1] = 0.0;
+    _sharedcRes[DIMENSION] = 1.0; _sharedcRes[DIMENSION + 1] = 0.0;
+
+    // Isi frekuensi dengan fase acak (Unit Magnitude)
+    // Jika customSeed diberikan, ia mereset PRNG agar deterministik sesuai seed
+    if (customSeed !== undefined) seededRandom(customSeed);
+
+    for (let k = 1; k < DIMENSION / 2; k++) {
+      const phase = seededRandom() * Math.PI * 2;
+      const cosP = Math.cos(phase);
+      const sinP = Math.sin(phase);
+
+      // Frekuensi positif
+      _sharedcRes[k * 2] = cosP;
+      _sharedcRes[k * 2 + 1] = sinP;
+
+      // Frekuensi negatif (Conjugate simetri agar hasil IFFT riil)
+      const symK = DIMENSION - k;
+      _sharedcRes[symK * 2] = cosP;
+      _sharedcRes[symK * 2 + 1] = -sinP;
+    }
+
+    fft.inverseTransform(_sharedResArray, _sharedcRes);
+
+    const finalVec = out || new Float32Array(DIMENSION);
+    let magSq = 0;
+    for(let i = 0; i < DIMENSION; i++) {
+        finalVec[i] = _sharedResArray[i * 2];
+        magSq += finalVec[i]! * finalVec[i]!;
+    }
+
+    // Normalisasi L2 (Math Branchless)
+    const invMag = 1.0 / (Math.sqrt(magSq) + 1e-15);
+    for(let i = 0; i < DIMENSION; i++) finalVec[i]! *= invMag;
+
+    return finalVec;
+  },
+>>>>>>> REPLACE
