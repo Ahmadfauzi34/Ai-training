@@ -4,6 +4,7 @@
   "version": "3.0.0",
   "type": "module",
   "scripts": {
+    "test": "node --experimental-strip-types scripts/run-tests.ts",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
@@ -14,6 +15,7 @@
     "clsx": "latest",
     "dexie": "^4.2.1",
     "fft.js": "^4.0.4",
+    "glob": "^13.0.6",
     "hono": "^4.6.14",
     "lucide-svelte": "^0.562.0",
     "rxdb": "latest",
