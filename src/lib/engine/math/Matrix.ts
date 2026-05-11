@@ -53,18 +53,19 @@ export class Matrix {
     const bData = b.data;
     const resData = result.data;
 
-    // 3. The Hot Loop (Optimized)
+    // 3. The Hot Loop (Optimized via IKJ iteration order for Cache Locality)
+    // By reordering loops from I-J-K to I-K-J, we iterate linearly over B matrix
+    // in the inner loop, significantly improving CPU cache utilization without extra allocations.
+    resData.fill(0); // Zero output before accumulation
     for (let i = 0; i < aRows; i++) {
-      for (let j = 0; j < bCols; j++) {
-        let sum = 0;
-        for (let k = 0; k < aCols; k++) {
-          // Non-null assertion (!) aman karena loop sesuai dimensi
-          // Ini memuaskan 'noUncheckedIndexedAccess' tanpa if-check yang lambat
-          const valA = aData[i * aCols + k]!; 
-          const valB = bData[k * bCols + j]!;
-          sum += valA * valB;
+      const i_aCols = i * aCols;
+      const i_bCols = i * bCols;
+      for (let k = 0; k < aCols; k++) {
+        const valA = aData[i_aCols + k]!;
+        const k_bCols = k * bCols;
+        for (let j = 0; j < bCols; j++) {
+          resData[i_bCols + j] += valA * bData[k_bCols + j]!;
         }
-        resData[i * bCols + j] = sum;
       }
     }
 
