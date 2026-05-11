@@ -102,8 +102,7 @@ class StatsTracker {
   getSummary(): string {
     const total = this._passed + this._failed + this._skipped + this._todo;
     return [
-      `
-${'='.repeat(60)}`,
+      `\n${'='.repeat(60)}`,
       'TEST SUMMARY',
       `${'='.repeat(60)}`,
       `  Total:     ${total}`,

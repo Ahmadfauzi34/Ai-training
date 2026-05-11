@@ -1,5 +1,5 @@
 import { describe, it } from 'node:test';
-import { StrictAssertions } from '../../../../scripts/test-runner/test-runner.ts';
+import { StrictAssertions } from '../../../../scripts/test-runner/src/core/test-runner.ts';
 import { Matrix } from './Matrix.ts';
 
 describe('Matrix Multiplication', () => {
