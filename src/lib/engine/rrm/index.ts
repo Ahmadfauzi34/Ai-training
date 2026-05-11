@@ -25,3 +25,4 @@ export class RRMNodeAdapter {
 }
 
 export { EntityManifold, MultiverseSandbox, FHRR, AxiomGenerator };
+export { RRMAdapter } from './adapter';
