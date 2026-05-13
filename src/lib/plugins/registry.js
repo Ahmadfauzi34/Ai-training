@@ -3,9 +3,10 @@
 import ActionNode from '../nodes/ActionNode.svelte';
 import MemoryNode from '../nodes/MemoryNode.svelte';
 import MathNode from '../nodes/MathNode.svelte';
+import RRMNode from '../nodes/RRMNode.svelte';
 
 // 2. Import Icon Factory
-import { Cpu, BrainCircuit, Calculator } from 'lucide-svelte';
+import { Cpu, BrainCircuit, Calculator, Orbit } from 'lucide-svelte';
 
 export const NODE_REGISTRY = {
   'action': {
@@ -36,5 +37,13 @@ export const NODE_REGISTRY = {
       cols: 2,
       defaultValue: [1, 0, 0, 1] 
     }
+  },
+
+  'rrm_reasoning': {
+    component: RRMNode,
+    label: 'RRM Reasoning',
+    icon: Orbit,
+    description: 'Quantum/VSA Engine untuk HDC Reasoning',
+    defaultData: { label: 'RRM Reasoner', mode: 'sandbox' }
   }
 };

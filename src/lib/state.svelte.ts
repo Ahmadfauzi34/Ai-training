@@ -20,6 +20,15 @@ const defaultNodes: AppNode[] = [
       prompt: 'Kamu adalah asisten V76 yang sangat patuh.' 
     },
     position: { x: 400, y: 80 },
+  },
+  {
+    id: asNodeId('rrm-node-1'),
+    type: 'rrm_reasoning',
+    data: {
+      label: 'RRM Reasoner',
+      mode: 'sandbox'
+    },
+    position: { x: 700, y: 80 },
   }
 ];
 

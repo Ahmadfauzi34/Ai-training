@@ -1,4 +1,5 @@
-import { TensorVector, GLOBAL_DIMENSION, MAX_HYPOTHESES } from '../core/config.js';
+import type { TensorVector } from '../core/config.js';
+import { GLOBAL_DIMENSION, MAX_ENTITIES, MAX_HYPOTHESES, MAX_SEEDS } from '../core/config.js';
 import { EntityManifold } from '../core/EntityManifold.js';
 import { MultiverseSandbox } from './MultiverseSandbox.js';
 import { Hypothesis } from './HamiltonianPruner.js';
