@@ -29,7 +29,7 @@ export interface MatrixNodeData extends BaseNodeData {
 }
 
 export interface RRMNodeData extends BaseNodeData {
-  mode: 'sandbox' | 'fhrr' | 'entanglement';
+  mode: 'sandbox' | 'fhrr' | 'entanglement' | 'orchestrator';
   customParams?: Record<string, any>;
 }
 
