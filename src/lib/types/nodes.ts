@@ -28,11 +28,17 @@ export interface MatrixNodeData extends BaseNodeData {
   operation?: 'add' | 'multiply' | 'subtract' | 'transpose' | 'normalize';
 }
 
+export interface RRMNodeData extends BaseNodeData {
+  mode: 'sandbox' | 'fhrr' | 'entanglement';
+  customParams?: Record<string, any>;
+}
+
 export type AppNodeData = 
   | InputNodeData 
   | ActionNodeData 
   | MemoryNodeData 
-  | MatrixNodeData;
+  | MatrixNodeData
+  | RRMNodeData;
 
 // --- NODE INTERFACES ---
 export interface BaseNode {
@@ -52,9 +58,11 @@ export interface InputNode extends BaseNode { type: 'input'; data: InputNodeData
 export interface ActionNode extends BaseNode { type: 'action'; data: ActionNodeData; }
 export interface MemoryNode extends BaseNode { type: 'rag_memory'; data: MemoryNodeData; }
 export interface MathNode extends BaseNode { type: 'math_op'; data: MatrixNodeData; }
+export interface RRMNode extends BaseNode { type: 'rrm_reasoning'; data: RRMNodeData; }
 
 export type AppNode = 
   | InputNode 
   | ActionNode 
   | MemoryNode 
-  | MathNode;
+  | MathNode
+  | RRMNode;

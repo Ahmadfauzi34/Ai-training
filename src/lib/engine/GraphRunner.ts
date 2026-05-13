@@ -3,6 +3,7 @@ import { Subject } from 'rxjs'; // ✅ Import RxJS
 import { executeRag } from './handlers/RagHandler';
 import { executeAction } from './handlers/ActionHandler';
 import { executeMath } from './handlers/MathHandler';
+import { executeRRM } from './handlers/RRMHandler';
 import { appState } from '../state.svelte'; 
 
 import type { 
@@ -25,8 +26,8 @@ type NodeHandler = (
 const HANDLERS: Record<string, NodeHandler> = {
   'rag_memory': executeRag as unknown as NodeHandler,
   'action': executeAction as unknown as NodeHandler,
-  'math_op': executeMath as unknown as NodeHandler
-
+  'math_op': executeMath as unknown as NodeHandler,
+  'rrm_reasoning': executeRRM as unknown as NodeHandler
 };
 
 export class GraphRunner {

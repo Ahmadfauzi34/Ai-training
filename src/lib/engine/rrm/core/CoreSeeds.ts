@@ -1,5 +1,6 @@
 import { FHRR } from './fhrr.js';
-import { TensorVector } from './config.js';
+import type { TensorVector } from './config.js';
+import { GLOBAL_DIMENSION, MAX_ENTITIES, MAX_HYPOTHESES, MAX_SEEDS } from './config.js';
 
 /**
  * CoreSeeds: Singleton / Static Registry for Fundamental Constants of the RRM Universe.

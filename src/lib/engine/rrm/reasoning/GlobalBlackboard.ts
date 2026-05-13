@@ -1,4 +1,5 @@
-import { TensorVector, GLOBAL_DIMENSION } from '../core/config.js';
+import type { TensorVector } from '../core/config.js';
+import { GLOBAL_DIMENSION, MAX_ENTITIES, MAX_HYPOTHESES, MAX_SEEDS } from '../core/config.js';
 import { FHRR } from '../core/fhrr.js';
 
 /**
