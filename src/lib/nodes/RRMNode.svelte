@@ -46,6 +46,7 @@
           <option value="sandbox">Quantum Sandbox</option>
           <option value="fhrr">VSA / FHRR Calc</option>
           <option value="entanglement">Entanglement Optimizer</option>
+          <option value="orchestrator">Agentic Orchestrator (Router)</option>
         </select>
       </div>
     </div>
