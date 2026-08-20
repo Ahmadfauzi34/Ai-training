@@ -1,7 +1,7 @@
-import type { TensorVector } from '../core/config.js';
-import { GLOBAL_DIMENSION, MAX_ENTITIES, MAX_HYPOTHESES, MAX_SEEDS } from '../core/config.js';
-import { EntityManifold } from '../core/EntityManifold.js';
-import { UniversalManifold } from './UniversalManifold.js';
+import type { TensorVector } from '../core/config.ts';
+import { GLOBAL_DIMENSION, MAX_ENTITIES, MAX_HYPOTHESES, MAX_SEEDS } from '../core/config.ts';
+import { EntityManifold } from '../core/EntityManifold.ts';
+import { UniversalManifold } from './UniversalManifold.ts';
 
 /**
  * ============================================================================

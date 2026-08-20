@@ -1,8 +1,8 @@
-import type { TensorVector } from '../core/config.js';
-import { GLOBAL_DIMENSION, MAX_ENTITIES, MAX_HYPOTHESES, MAX_SEEDS } from '../core/config.js';
-import { FHRR } from '../core/fhrr.js';
-import { UniversalManifold } from '../perception/UniversalManifold.js';
-import { CoreSeeds } from '../core/CoreSeeds.js';
+import type { TensorVector } from '../core/config.ts';
+import { GLOBAL_DIMENSION, MAX_ENTITIES, MAX_HYPOTHESES, MAX_SEEDS } from '../core/config.ts';
+import { FHRR } from '../core/fhrr.ts';
+import { UniversalManifold } from '../perception/UniversalManifold.ts';
+import { CoreSeeds } from '../core/CoreSeeds.ts';
 
 /**
  * 🌌 THE LOGIC SEED BANK 🌌

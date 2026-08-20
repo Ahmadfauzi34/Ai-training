@@ -1,8 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { GLOBAL_DIMENSION } from '../core/config.js';
-import { CoreSeeds } from '../core/CoreSeeds.js';
-import { FHRR } from '../core/fhrr.js';
+import { GLOBAL_DIMENSION } from '../core/config.ts';
+import { CoreSeeds } from '../core/CoreSeeds.ts';
+import { FHRR } from '../core/fhrr.ts';
 
 export interface SymbolicComponent {
     seed: string; // Nama konseptual (misal "X_AXIS_SEED", "COLOR_RED")

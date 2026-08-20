@@ -1,12 +1,14 @@
-export enum LogLevel {
-    TRACE = 0,
-    DEBUG = 1,
-    INFO = 2,
-    WARN = 3,
-    ERROR = 4
-}
+export const LogLevel = {
+    TRACE: 0,
+    DEBUG: 1,
+    INFO: 2,
+    WARN: 3,
+    ERROR: 4
+} as const;
 
-const MAX_LOG_LINES = 5000; // Mencegah memory leak dari unlimited array push
+export type LogLevel = typeof LogLevel[keyof typeof LogLevel];
+
+const MAX_LOG_LINES = 5000;
 
 export class PDRLogger {
     static level: LogLevel = LogLevel.INFO;
@@ -25,7 +27,6 @@ export class PDRLogger {
     }
 
     static getBuffer(): string {
-        // Gabungkan secara urut dari yang paling lama hingga terbaru
         if (this.bufferCount < MAX_LOG_LINES) {
             return this.buffer.slice(0, this.bufferCount).join('\n');
         } else {
@@ -44,7 +45,6 @@ export class PDRLogger {
     }
 
     private static notify(msg: string) {
-        // Implementasi Circular Buffer O(1) (Mencegah shift() array O(N))
         this.buffer[this.bufferIndex] = msg;
         this.bufferIndex = (this.bufferIndex + 1) % MAX_LOG_LINES;
 

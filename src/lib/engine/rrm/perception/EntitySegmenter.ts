@@ -1,7 +1,6 @@
-import { EntityManifold } from '../core/EntityManifold.js';
-import type { TensorVector } from '../core/config';
-import { GLOBAL_DIMENSION, MAX_ENTITIES, MAX_HYPOTHESES, MAX_SEEDS } from '../core/config';
-import { FHRR } from '../core/fhrr';
+import { EntityManifold } from '../core/EntityManifold.ts';
+import { type TensorVector, GLOBAL_DIMENSION, MAX_ENTITIES, MAX_HYPOTHESES, MAX_SEEDS } from '../core/config.ts';
+import { FHRR } from '../core/fhrr.ts';
 
 /**
  * 🧩 ENTITY SEGMENTER (Fase 2: The Perception Layer)
@@ -35,11 +34,6 @@ export class EntitySegmenter {
 
         let entityCounter = 1;
 
-        // PRIOR BELIEF (Karl Friston's Generative Model)
-        // Sebelum kita mengadu resonansi antar Tensor (O(N^2) Dot Products),
-        // kita mengelompokkan secara logis berdasar Token (Warna) karena Fasa warna berbeda
-        // PASTI akan saling destruktif dan menyebabkan Prediction Error yang fatal.
-        // Ini memangkas iterasi yang tidak perlu hingga 90% (Active Inference Optimization).
         const tokenGroups = new Map<number, { key: string, tensor: TensorVector, parsed: {x:number, y:number, token:number} }[]>();
 
         for (let i = 0; i < entries.length; i++) {
@@ -50,7 +44,7 @@ export class EntitySegmenter {
                 group = [];
                 tokenGroups.set(parsed.token, group);
             }
-            group[group.length] = { key, tensor, parsed }; // DOSA 2 PENGAMANAN: Index-based assignment daripada push() untuk engine hotpath
+            group[group.length] = { key, tensor, parsed };
 
             globalWidth = Math.max(globalWidth, parsed.x + 1);
             globalHeight = Math.max(globalHeight, parsed.y + 1);
@@ -59,35 +53,26 @@ export class EntitySegmenter {
         manifold.globalWidth = globalWidth;
         manifold.globalHeight = globalHeight;
 
-        // Jalankan Resonansi Quantum per Prior Belief (Warna)
         for (const [token, groupEntries] of tokenGroups.entries()) {
             for (let i = 0; i < groupEntries.length; i++) {
                 const { key: keyA, tensor: tensorA, parsed: parsedA } = groupEntries[i]!;
 
-                // ✅ GUNAKAN CONTINUE (V8 Optimized Control Flow)
                 if (visited.has(keyA)) continue;
 
-                // Track bounding box (Min/Max X/Y) menggunakan Math Branchless
                 let minX = parsedA.x;
                 let maxX = parsedA.x;
                 let minY = parsedA.y;
                 let maxY = parsedA.y;
 
-                // ✅ ECS ALLOCATION: Dosa Ke-4 Dihapus (Tidak ada array.push/object statis)
                 const eIndex = manifold.allocateEntity();
+                if (eIndex < 0) break;
 
-                // ✅ ZERO-IF Fallback jika Memory Pool penuh (Bypass the loop instead of crashing)
-                if (eIndex < 0) break; // Overflow perlindungan untuk 500 agen maksimal
-
-                // Pointer ke Float32Array
                 const eTensor = manifold.getTensor(eIndex);
 
-                // Inisialisasi entitas langsung ke Manifold Buffer
                 manifold.ids[eIndex] = `E_${entityCounter++}`;
                 manifold.tokens[eIndex] = parsedA.token;
                 manifold.masses[eIndex] = 1.0;
 
-                // Inisialisasi tensor awal
                 this.addVectorInPlace(eTensor, tensorA);
                 visited.add(keyA);
 
@@ -95,16 +80,13 @@ export class EntitySegmenter {
                 let sumY = parsedA.y;
                 let membersCount = 1;
 
-                // Active Inference: Cari partikel lain DALAM belief yang sama yang resonansinya menekan Prediction Error.
                 for (let j = i + 1; j < groupEntries.length; j++) {
                     const { key: keyB, tensor: tensorB, parsed: parsedB } = groupEntries[j]!;
 
                     if (visited.has(keyB)) continue;
 
-                    // Hitung interferensi/kemiripan tensor (O(8192) Dot Product)
                     const sim = FHRR.similarity(eTensor, tensorB);
 
-                    // ✅ Control Flow
                     if (sim >= similarityThreshold) {
                         this.addVectorInPlace(eTensor, tensorB);
                         visited.add(keyB);
@@ -112,9 +94,8 @@ export class EntitySegmenter {
                         sumX += parsedB.x;
                         sumY += parsedB.y;
                         membersCount++;
-                        manifold.masses[eIndex] += 1.0; // Branchless ALU Addition
+                        manifold.masses[eIndex] += 1.0;
 
-                        // Math Branchless untuk Spread Spatial Bounding Box
                         minX = Math.min(minX, parsedB.x);
                         maxX = Math.max(maxX, parsedB.x);
                         minY = Math.min(minY, parsedB.y);
@@ -122,15 +103,12 @@ export class EntitySegmenter {
                     }
                 }
 
-                // Hitung dimensi Bounding Box Anisotropik
                 manifold.spansX[eIndex] = (maxX - minX + 1);
                 manifold.spansY[eIndex] = (maxY - minY + 1);
 
-                // Hitung Center of Mass rata-rata
                 manifold.centersX[eIndex] = sumX / membersCount;
                 manifold.centersY[eIndex] = sumY / membersCount;
 
-                // L2 Normalization (V8 SIMD Epsilon branchless math)
                 manifold.normalizeL2(eIndex);
             }
         }

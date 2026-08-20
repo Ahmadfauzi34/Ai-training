@@ -13,16 +13,18 @@
     updateNodeData(id, { [field]: value });
     appState.lastChange = Date.now();
   }
+
+  let executionOutput = $derived(appState.executionResults?.[id] || '');
 </script>
 
-<div class={`shadow-xl rounded-lg border-2 transition-all duration-300 bg-nord-panel ${expanded ? 'border-nord-primary w-64' : 'border-nord-border w-40'}`}>
+<div class={`shadow-xl rounded-lg border-2 transition-all duration-300 bg-nord-panel ${expanded ? 'border-nord-primary w-72' : 'border-nord-border w-44'}`}>
 
   <div class="flex items-center justify-between p-2 bg-nord-dark rounded-t-md">
     <div class="flex items-center gap-2">
       <div class="p-1 bg-nord-bg rounded text-nord-primary">
         <BrainCircuit size={14} />
       </div>
-      <div class="text-xs font-bold text-nord-text truncate max-w-[80px]">
+      <div class="text-xs font-bold text-nord-text truncate max-w-[100px]">
         {data.label || 'RRM Engine'}
       </div>
     </div>
@@ -39,15 +41,26 @@
         <label for={`mode-${uid}`} class="text-[9px] font-mono text-nord-light uppercase block mb-1">Mode RRM</label>
         <select
           id={`mode-${uid}`}
-          value={data.mode || 'sandbox'}
+          value={data.mode || 'plr_proof'}
           onchange={(e) => updateField('mode', e.target.value)}
           class="nodrag w-full bg-nord-dark border border-nord-border rounded text-xs text-nord-text p-1 outline-none focus:border-nord-primary"
         >
+          <option value="plr_proof">PLR Proof State Kernel</option>
           <option value="sandbox">Quantum Sandbox</option>
           <option value="fhrr">VSA / FHRR Calc</option>
           <option value="entanglement">Entanglement Optimizer</option>
         </select>
       </div>
+
+      {#if executionOutput}
+        <div class="p-2 bg-nord-dark/80 rounded border border-nord-border text-[10px] font-mono text-nord-light max-h-32 overflow-y-auto whitespace-pre-wrap">
+          {executionOutput}
+        </div>
+      {/if}
+    </div>
+  {:else if executionOutput}
+    <div class="px-2 py-1 text-[9px] font-mono text-nord-light truncate border-t border-nord-border bg-nord-dark/50">
+      ▶ {executionOutput.slice(0, 30)}...
     </div>
   {/if}
 

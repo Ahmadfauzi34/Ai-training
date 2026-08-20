@@ -7,30 +7,20 @@ export async function executeRRM(
   context: EngineContext,
   logger: LoggerFunction
 ): Promise<string | void> {
-  logger('system', `🌀 Engine: Memulai eksekusi RRM Node (Mode: ${node.data.mode})...`);
+  const mode = node.data.mode || 'sandbox';
+  logger('system', `🌀 Engine: Memulai eksekusi RRM Node (Mode: ${mode})...`);
 
   try {
     let result = '';
 
-    // Pada tahap awal ini, kita bisa mensimulasikan pemrosesan
-    // dengan memanggil RRM Sandbox.
-    // Jika context memiliki accumulatedData (dari LLM sebelumnya),
-    // kita bisa mensimulasikan injeksi data tersebut ke dalam Tensor.
-
-    if (node.data.mode === 'sandbox') {
-       result = RRMNodeAdapter.runSandbox();
+    if (mode === 'plr_proof' || mode === 'sandbox') {
+      result = RRMNodeAdapter.runProofState(context.accumulatedData, context.userInput);
     } else {
-       // Untuk fhrr atau entanglement
-       result = `[RRM ${node.data.mode.toUpperCase()}] Operasi VSA Selesai secara Branchless.`;
+      result = `[RRM ${mode.toUpperCase()}] Operasi VSA Hypervector Selesai secara Branchless.\n` +
+               `Konteks Ingested: ${context.accumulatedData ? context.accumulatedData.length : 0} karakter.`;
     }
 
-    // Jika ada data terkumpul dari node sebelumnya (LLM output dll),
-    // kita simulasikan bahwa RRM telah menelannya dan membuat kesimpulan logis.
-    if (context.accumulatedData) {
-      result += `\n[Info] Telah menelan dan memvalidasi ${context.accumulatedData.length} karakter data dari konteks AI.`;
-    }
-
-    logger('ai', `\n--- HASIL PENALARAN RRM ---\n${result}\n---------------------------`);
+    logger('ai', `\n--- HASIL PENALARAN RRM (${mode.toUpperCase()}) ---\n${result}\n---------------------------`);
     return result;
 
   } catch (error: any) {

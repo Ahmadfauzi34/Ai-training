@@ -1,6 +1,6 @@
 // src/lib/engine/rrm/adapter.ts
 
-import { Matrix } from '../math/Matrix';
+import { Matrix } from '../math/Matrix.ts';
 
 /**
  * RRMAdapter: Jembatan Semi-OOP (Memory View Pattern)
@@ -23,10 +23,7 @@ export class RRMAdapter {
             throw new Error(`Dimensi Matrix (${rows}x${cols}) tidak sesuai dengan panjang buffer (${length})`);
         }
 
-        // subarray TIDAK menyalin memori, ia hanya membuat view referensi pointer
         const view = buffer.subarray(offset, offset + length);
-
-        // Injeksikan ke dalam kelas OOP kita
         return new Matrix(rows, cols, view);
     }
 }

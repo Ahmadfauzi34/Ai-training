@@ -1,7 +1,7 @@
-import { EntityManifold } from '../core/EntityManifold.js';
-import type { TensorVector } from '../core/config.js';
-import { GLOBAL_DIMENSION, MAX_ENTITIES, MAX_HYPOTHESES, MAX_SEEDS } from '../core/config.js';
-import { FHRR } from '../core/fhrr.js';
+import { EntityManifold } from '../core/EntityManifold.ts';
+import type { TensorVector } from '../core/config.ts';
+import { GLOBAL_DIMENSION, MAX_ENTITIES, MAX_HYPOTHESES, MAX_SEEDS } from '../core/config.ts';
+import { FHRR } from '../core/fhrr.ts';
 
 /**
  * ============================================================================
