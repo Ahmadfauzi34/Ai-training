@@ -18,9 +18,20 @@ interface EmbeddingResponse {
   error?: { message: string };
 }
 
+// Helper to redact sensitive API keys from error messages and prevent credential leakage
+export function sanitizeErrorMessage(message: string, apiKey?: string): string {
+  if (!message) return 'An error occurred';
+  if (apiKey && apiKey.trim()) {
+    return message.replaceAll(apiKey.trim(), '[REDACTED_API_KEY]');
+  }
+  return message;
+}
+
 // 1. Generate Text
 export async function generateText(model: string, prompt: string, apiKey: string): Promise<string> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+  const safeModel = encodeURIComponent((model || '').trim());
+  const safeKey = encodeURIComponent((apiKey || '').trim());
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${safeModel}:generateContent?key=${safeKey}`;
 
   const resp = await fetch(url, {
     method: 'POST',
@@ -30,7 +41,7 @@ export async function generateText(model: string, prompt: string, apiKey: string
 
   const data = (await resp.json()) as GeminiResponse;
 
-  if (data.error) throw new Error(data.error.message);
+  if (data.error) throw new Error(sanitizeErrorMessage(data.error.message, apiKey));
 
   return data.candidates?.[0]?.content?.parts?.[0]?.text || "AI diam.";
 }
@@ -38,7 +49,9 @@ export async function generateText(model: string, prompt: string, apiKey: string
 // 2. Generate Embedding
 export async function getEmbedding(text: string, apiKey: string): Promise<number[]> {
   const model = "text-embedding-004"; 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:embedContent?key=${apiKey}`;
+  const safeModel = encodeURIComponent(model);
+  const safeKey = encodeURIComponent((apiKey || '').trim());
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${safeModel}:embedContent?key=${safeKey}`;
 
   const response = await fetch(url, {
     method: 'POST',
@@ -51,7 +64,7 @@ export async function getEmbedding(text: string, apiKey: string): Promise<number
 
   const data = (await response.json()) as EmbeddingResponse;
 
-  if (data.error) throw new Error("Embedding Error: " + data.error.message);
+  if (data.error) throw new Error("Embedding Error: " + sanitizeErrorMessage(data.error.message, apiKey));
 
   return data.embedding.values;
 }
