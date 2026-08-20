@@ -4,9 +4,10 @@ import ActionNode from '../nodes/ActionNode.svelte';
 import MemoryNode from '../nodes/MemoryNode.svelte';
 import MathNode from '../nodes/MathNode.svelte';
 import RRMNode from '../nodes/RRMNode.svelte';
+import SwarmNode from '../nodes/SwarmNode.svelte';
 
 // 2. Import Icon Factory
-import { Cpu, BrainCircuit, Calculator, Orbit } from 'lucide-svelte';
+import { Cpu, BrainCircuit, Calculator, Orbit, Users } from 'lucide-svelte';
 
 export const NODE_REGISTRY = {
   'action': {
@@ -45,5 +46,19 @@ export const NODE_REGISTRY = {
     icon: Orbit,
     description: 'Quantum/VSA Engine untuk HDC Reasoning',
     defaultData: { label: 'RRM Reasoner', mode: 'sandbox' }
+  },
+
+  'swarm_sim': {
+    component: SwarmNode,
+    label: 'Swarm / Market Engine',
+    icon: Users,
+    description: 'Simulasi Swarm Agent & Market (10,000+ Agen)',
+    defaultData: {
+      label: 'Swarm Sim',
+      agentCount: 10000,
+      cohesion: 0.05,
+      separation: 0.02,
+      alignment: 0.01
+    }
   }
 };
