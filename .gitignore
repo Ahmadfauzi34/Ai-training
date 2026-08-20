@@ -1,3 +1,5 @@
 node_modules
-node_modules
 dist/
+__pycache__
+*.pyc
+tools/ai_studio_tool/fixtures_min/
