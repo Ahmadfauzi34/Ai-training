@@ -2,7 +2,24 @@ import { run } from 'node:test';
 import { tap, spec } from 'node:test/reporters';
 import { Transform } from 'node:stream';
 import process from 'node:process';
-import { glob } from 'glob';
+import fs from 'node:fs';
+import path from 'node:path';
+
+function findTestFiles(dir: string, patternSuffix = '.test.ts'): string[] {
+  let results: string[] = [];
+  if (!fs.existsSync(dir)) return results;
+  const list = fs.readdirSync(dir);
+  for (const file of list) {
+    const fullPath = path.join(dir, file);
+    const stat = fs.statSync(fullPath);
+    if (stat && stat.isDirectory()) {
+      results = results.concat(findTestFiles(fullPath, patternSuffix));
+    } else if (file.endsWith(patternSuffix)) {
+      results.push(path.resolve(fullPath));
+    }
+  }
+  return results;
+}
 
 // ============================================================================
 // KONFIGURASI CONSTANTS (Enum Dispatch)
@@ -200,11 +217,9 @@ async function main(): Promise<number> {
   console.log(`   CI Mode:     ${CONFIG.CI ? 'ON' : 'OFF'}`);
   console.log(`   Timeout:     ${CONFIG.TIMEOUT_MS}ms\n`);
 
-  // Resolve test files using glob
-  const files = await glob(CONFIG.PATTERN, {
-    absolute: true,
-    cwd: process.cwd(),
-  });
+  // Resolve test files using native fs traversal (zero-dependency)
+  const targetDir = CONFIG.PATTERN.startsWith('src') ? 'src' : '.';
+  const files = findTestFiles(targetDir);
 
   if (files.length === 0) {
     console.error(`❌ No test files found for pattern: ${CONFIG.PATTERN}`);
