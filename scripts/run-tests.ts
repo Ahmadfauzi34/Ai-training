@@ -2,7 +2,7 @@ import { run } from 'node:test';
 import { tap, spec } from 'node:test/reporters';
 import { Transform } from 'node:stream';
 import process from 'node:process';
-import { glob } from 'glob';
+import { globSync } from 'node:fs';
 
 // ============================================================================
 // KONFIGURASI CONSTANTS (Enum Dispatch)
@@ -200,8 +200,8 @@ async function main(): Promise<number> {
   console.log(`   CI Mode:     ${CONFIG.CI ? 'ON' : 'OFF'}`);
   console.log(`   Timeout:     ${CONFIG.TIMEOUT_MS}ms\n`);
 
-  // Resolve test files using glob
-  const files = await glob(CONFIG.PATTERN, {
+  // Resolve test files using node:fs globSync
+  const files = globSync(CONFIG.PATTERN, {
     absolute: true,
     cwd: process.cwd(),
   });
