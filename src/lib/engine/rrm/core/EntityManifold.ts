@@ -1,5 +1,5 @@
-import type { TensorVector } from './config.js';
-import { GLOBAL_DIMENSION, MAX_ENTITIES, MAX_HYPOTHESES, MAX_SEEDS } from './config.js';
+import type { TensorVector } from './config.ts';
+import { GLOBAL_DIMENSION, MAX_ENTITIES, MAX_HYPOTHESES, MAX_SEEDS } from './config.ts';
 
 /**
  * 🌌 ENTITY MANIFOLD (Structure of Arrays - SoA)

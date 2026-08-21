@@ -1,8 +1,8 @@
-import type { TensorVector } from '../core/config.js';
-import { GLOBAL_DIMENSION, MAX_ENTITIES, MAX_HYPOTHESES, MAX_SEEDS } from '../core/config.js';
-import { EntityManifold } from '../core/EntityManifold.js';
-import { MultiverseSandbox } from './MultiverseSandbox.js';
-import { Hypothesis } from './HamiltonianPruner.js';
+import type { TensorVector } from '../core/config.ts';
+import { GLOBAL_DIMENSION, MAX_ENTITIES, MAX_HYPOTHESES, MAX_SEEDS } from '../core/config.ts';
+import { EntityManifold } from '../core/EntityManifold.ts';
+import { MultiverseSandbox } from './MultiverseSandbox.ts';
+import type { Hypothesis } from './HamiltonianPruner.ts';
 
 export interface GroverConfig {
   readonly dimensions: number;
@@ -58,23 +58,20 @@ export class GroverDiffusionSystem {
 
     this.amplitudes.fill(0.0);
 
-    // Hitung L2 Norm Total dari Energi awal untuk Normalisasi
     let totalInitialEnergySq = 0.0;
     for (let i = 0; i < N; i++) {
-      const energy = candidates[i]!.energy; // energy (0.0 to 1.0)
-      const baseAmp = Math.max(0.001, Math.sqrt(energy)); // Prevent zero-amplitude vacuum
+      const energy = candidates[i]!.energy;
+      const baseAmp = Math.max(0.001, Math.sqrt(energy));
       totalInitialEnergySq += baseAmp * baseAmp;
     }
 
     const normalizationFactor = 1.0 / Math.sqrt(totalInitialEnergySq + 1e-15);
 
-    // Suntikkan Amplitudo Kuantum Berbias (Biased Superposition)
     for (let i = 0; i < N; i++) {
       const baseIdx = i * D;
-      const ruleTensor = candidates[i]!.tensor_rule || candidates[i]!.tensor; // Mendukung format Hypothesis atau Trajectory
+      const ruleTensor = candidates[i]!.tensor_rule || candidates[i]!.tensor;
       const energy = candidates[i]!.energy;
 
-      // Amplitudo awal berbanding lurus dengan kekuatan hipotesis (energy)
       const amp = Math.sqrt(energy) * normalizationFactor;
 
       for (let d = 0; d < D; d++) {
@@ -85,9 +82,6 @@ export class GroverDiffusionSystem {
 
   /**
    * CONTINUOUS FREE ENERGY ORACLE
-   * Tidak butuh tahu mana jawaban yang benar. Oracle ini akan
-   * menjalankan setiap kandidat di Sandbox dan menghitung Free Energy-nya.
-   * Semakin rendah Free Energy, semakin kuat pembalikan fasanya (Phase Inversion).
    */
   public evaluateOracle(candidates: any[], trainStates: { in: EntityManifold, out: EntityManifold }[]): void {
     const N = Math.min(this.config.searchSpaceSize, candidates.length);
@@ -99,17 +93,13 @@ export class GroverDiffusionSystem {
       const candidate = candidates[i]!;
       let totalFreeEnergy = 0.0;
 
-      // Ambil metadata skalar kinetik jika tersedia (fallback),
-      // untuk MCTS Trajectory biasanya null karena sudah encoded
       const deltaX = candidate.deltaX || 0.0;
       const deltaY = candidate.deltaY || 0.0;
       const tensorRule = candidate.tensor_rule || candidate.tensor;
       const physicsTier = candidate.physicsTier || 0;
 
-      // 1. Dynamic Evaluation: Jalankan Kandidat di Sandbox melintasi semua state pelatihan
       for (let s = 0; s < trainStates.length; s++) {
         const state = trainStates[s]!;
-        // Gunakan Universe 0 untuk evaluasi sementara (O(1) memcpy)
         this.sandbox.cloneToUniverse(state.in, 0);
         this.sandbox.applyAxiom(0, tensorRule, deltaX, deltaY, physicsTier);
         totalFreeEnergy += this.sandbox.calculateFreeEnergy(0, state.out);
@@ -117,17 +107,11 @@ export class GroverDiffusionSystem {
 
       this.energies[i] = totalFreeEnergy;
 
-      // 2. Continuous Phase Multiplier
-      // Sigmoid: 0.0 (Surprise Tinggi/Buruk) -> 1.0 (Surprise Rendah/Sempurna)
       const score = 0.5 * (1.0 + Math.tanh((threshold - totalFreeEnergy) / T));
 
-      // 3. Inversion Strength:
-      // Score 1.0 (Sempurna) -> Multiplier -1.0 (Pembalik Fase Penuh / Target)
-      // Score 0.0 (Buruk) -> Multiplier 1.0 (Fase Tidak Berubah)
       this.multipliers[i] = 1.0 - (2.0 * score);
     }
 
-    // 4. Menerapkan Multiplier (Branchless) ke Amplitudo Kuantum
     for (let i = 0; i < N; i++) {
       const mult = this.multipliers[i]!;
       const baseIdx = i * D;
@@ -145,17 +129,11 @@ export class GroverDiffusionSystem {
     }
   }
 
-  /**
-   * DIFFUSION OPERATOR (Inversion About Mean)
-   * Menyebarkan kembali probabilitas amplitudo. Amplitudo yang fasanya terbalik
-   * (Target) akan meledak nilainya, sementara yang lain saling meniadakan.
-   */
   public applyDiffusion(N: number): void {
     const D = this.config.dimensions;
     const amps = this.amplitudes;
     const meanBuf = this.meanBuffer;
 
-    // Step 1: Hitung Mean Amplitude per dimensi (Reduction)
     meanBuf.fill(0);
     for (let i = 0; i < N; i++) {
       const baseIdx = i * D;
@@ -169,8 +147,6 @@ export class GroverDiffusionSystem {
       meanBuf[d] *= invN;
     }
 
-    // Step 2: Refleksi (Inversion about Mean)
-    // amp' = 2 * mean - amp
     for (let i = 0; i < N; i++) {
       const baseIdx = i * D;
       for (let d = 0; d < D; d++) {
@@ -179,13 +155,9 @@ export class GroverDiffusionSystem {
       }
     }
 
-    // Normalisasi peluruhan opsional untuk menjaga stabilitas Float32
     this.thermalNormalize(N);
   }
 
-  /**
-   * Normalisasi Energi Kinetik menggunakan distribusi Boltzmann tiruan.
-   */
   private thermalNormalize(N: number): void {
     const D = this.config.dimensions;
     const amps = this.amplitudes;
@@ -221,29 +193,19 @@ export class GroverDiffusionSystem {
     }
   }
 
-  /**
-   * Eksekusi Amplifikasi Kuantum (Grover Iteration)
-   * Menyelesaikan ambiguitas (Tie-breaker) pada N kandidat terbaik MCTS.
-   */
   public search(candidates: any[], trainStates: { in: EntityManifold, out: EntityManifold }[]): any | null {
     const N = Math.min(this.config.searchSpaceSize, candidates.length);
     if (N === 0) return null;
 
-    // Hybrid Phase: Warm Start berdasar energi kandidat (bukan Uniform Superposition)
     this.warmStart(candidates);
 
-    // K_opt (Jika N kecil misal 10, iterasi ≈ 2. Sangat cepat!)
     const iterations = Math.min(this.config.maxIterations, Math.ceil((Math.PI / 4) * Math.sqrt(N)));
 
     for (let k = 0; k < iterations; k++) {
-      // 1. Evaluasi Dinamis (The Free Energy Oracle)
       this.evaluateOracle(candidates, trainStates);
-
-      // 2. Resonansi & Amplifikasi Amplitudo (Inversion About Mean)
       this.applyDiffusion(N);
     }
 
-    // 3. Pengukuran (The Measurement Collapse)
     let maxAmp = -9999.0;
     let winnerIdx = 0;
 
@@ -251,13 +213,11 @@ export class GroverDiffusionSystem {
       const baseIdx = i * this.config.dimensions;
       let stateEnergy = 0.0;
 
-      // Hitung "Probability Amplitude" (L2 Norm) dari masing-masing vektor di superposisi
       for (let d = 0; d < this.config.dimensions; d++) {
         const a = this.amplitudes[baseIdx + d]!;
         stateEnergy += a * a;
       }
 
-      // Branchless Max Selection
       const isGreater = Number(stateEnergy > maxAmp);
       maxAmp = (stateEnergy * isGreater) + (maxAmp * (1 - isGreater));
       winnerIdx = (i * isGreater) + (winnerIdx * (1 - isGreater));

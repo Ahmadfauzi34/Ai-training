@@ -1,6 +1,6 @@
-import type { TensorVector } from '../core/config.js';
-import { GLOBAL_DIMENSION, MAX_ENTITIES, MAX_HYPOTHESES, MAX_SEEDS } from '../core/config.js';
-import { PDRLogger } from '../shared/logger.js';
+import type { TensorVector } from '../core/config.ts';
+import { GLOBAL_DIMENSION, MAX_ENTITIES, MAX_HYPOTHESES, MAX_SEEDS } from '../core/config.ts';
+import { PDRLogger } from '../shared/logger.ts';
 
 export interface Hypothesis {
     id: string; // Tetap disimpan untuk log

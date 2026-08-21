@@ -1,10 +1,10 @@
-import { EntityManifold } from '../core/EntityManifold.js';
-import type { TensorVector } from '../core/config.js';
-import { GLOBAL_DIMENSION, MAX_ENTITIES, MAX_HYPOTHESES, MAX_SEEDS } from '../core/config.js';
-import { FHRR } from '../core/fhrr.js';
-import { CoreSeeds } from '../core/CoreSeeds.js';
-import { AxiomGenerator } from './AxiomGenerator.js';
-import { SwarmDynamics } from './SwarmDynamics.js';
+import { EntityManifold } from '../core/EntityManifold.ts';
+import type { TensorVector } from '../core/config.ts';
+import { GLOBAL_DIMENSION, MAX_ENTITIES, MAX_HYPOTHESES, MAX_SEEDS } from '../core/config.ts';
+import { FHRR } from '../core/fhrr.ts';
+import { CoreSeeds } from '../core/CoreSeeds.ts';
+import { AxiomGenerator } from './AxiomGenerator.ts';
+import { SwarmDynamics } from './SwarmDynamics.ts';
 
 export const MAX_DEPTH = 5;
 export const MAX_BRANCHES = 4;

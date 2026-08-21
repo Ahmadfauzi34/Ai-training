@@ -1,6 +1,6 @@
-import { EntityManifold } from '../core/EntityManifold.js';
-import { MAX_ENTITIES } from '../core/config.js';
-import { FHRR } from '../core/fhrr.js';
+import { EntityManifold } from '../core/EntityManifold.ts';
+import { MAX_ENTITIES } from '../core/config.ts';
+import { FHRR } from '../core/fhrr.ts';
 
 /**
  * ============================================================================

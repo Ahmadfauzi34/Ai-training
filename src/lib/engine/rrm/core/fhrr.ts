@@ -1,6 +1,6 @@
 import FFT_Mod from 'fft.js';
 const FFT = (FFT_Mod as any).default || FFT_Mod;
-import { GLOBAL_DIMENSION } from './config';
+import { GLOBAL_DIMENSION } from './config.ts';
 
 export const DIMENSION = GLOBAL_DIMENSION; // Harus kelipatan 2 (Power of 2)
 const fft = new FFT(DIMENSION);

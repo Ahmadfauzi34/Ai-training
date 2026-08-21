@@ -1,5 +1,5 @@
 // src/lib/engine/GraphRunner.ts
-import { Subject } from 'rxjs'; // ✅ Import RxJS
+import { Subject } from 'rxjs';
 import { executeRag } from './handlers/RagHandler';
 import { executeAction } from './handlers/ActionHandler';
 import { executeMath } from './handlers/MathHandler';
@@ -12,11 +12,9 @@ import type {
   EngineContext, 
   LoggerFunction, 
   NodeId, 
-  LogRole,
-  ActionNode 
+  LogRole
 } from '../types';
 
-// Definisi Handler
 type NodeHandler = (
   node: AppNode, 
   context: EngineContext, 
@@ -48,75 +46,71 @@ export class GraphRunner {
   }
 
   async run(userInput: string) {
-    const startNode = this.nodes.find((n): n is AppNode & { type: 'input' } => n.type === 'input');
-
-    if (!startNode) {
-      this.onLog('system', "❌ Error: Tidak ada Node Start.");
+    if (!this.nodes || this.nodes.length === 0) {
+      this.onLog('system', "⚠️ Error: Graph kosong.");
       return;
     }
 
-    // Setup Environment
-    const rawApiKey = localStorage.getItem('gemini_key');
-    const env: { apiKey?: string } = {}; 
-    if (rawApiKey) {
-      env.apiKey = rawApiKey;
+    let startNodes = this.nodes.filter(n => n.type === 'input');
+
+    if (startNodes.length === 0) {
+      // Fallback: Cari node yang tidak punya in-edges (root nodes)
+      const targetNodeIds = new Set(this.edges.map(e => e.target));
+      const rootNodes = this.nodes.filter(n => !targetNodeIds.has(n.id));
+      startNodes = rootNodes.length > 0 ? rootNodes : [this.nodes[0]];
     }
 
-    // 👇 UPDATE CONTEXT SETUP (YANG BERSIH)
+    // Safe environment setup
+    const env: { apiKey?: string } = {}; 
+    try {
+      if (typeof localStorage !== 'undefined') {
+        const rawApiKey = localStorage.getItem('gemini_key');
+        if (rawApiKey) env.apiKey = rawApiKey;
+      }
+    } catch (_) {
+      // Safe guard bila localStorage di-block
+    }
+
     let context: EngineContext = {
       userInput: userInput,
       accumulatedData: "",
       env: env,
-
-      // Inisialisasi Map
       nodeResults: new Map(),
       tensorRegistry: this.tensorRegistry,
-
-      // Snapshot Graph
       graph: {
         nodes: this.nodes,
         edges: this.edges
       },
-
-      // ✅ Inisialisasi Stream RxJS
       events$: new Subject() 
     };
 
-    // --- MULAI TRAVERSAL ---
-
-    let queue: AppNode[] = [startNode];
-    let visited = new Set<NodeId>([startNode.id]);
-
-    // Optimisasi: Pre-compute map untuk node lookup (O(1) vs O(N))
+    let queue: AppNode[] = [...startNodes];
+    let visited = new Set<NodeId>(startNodes.map(n => n.id));
     const nodeMap = new Map(this.nodes.map(n => [n.id, n]));
 
-    this.onLog('system', '🌊 Engine: Memulai penelusuran...');
+    this.onLog('system', '🌊 Engine: Memulai eksekusi Graph Runner...');
 
     while (queue.length > 0) {
       const currentNode = queue.shift(); 
       if (!currentNode) continue; 
 
-      // Jalankan Handler Node saat ini
       const handler = HANDLERS[currentNode.type];
       if (handler) {
         const result = await handler(currentNode, context, this.onLog);
 
-        // Simpan Hasil ke Context & State Global (Visualisasi)
         if (result !== undefined) {
           context.nodeResults.set(currentNode.id, result);
-          appState.executionResults[currentNode.id] = result; // Update UI
+          if (appState && appState.executionResults) {
+            appState.executionResults[currentNode.id] = result;
+          }
 
-          // Jika node action mengembalikan string (balasan), atau RAG, tambahkan ke accumulatedData
-          // untuk Node AI berikutnya
           if (typeof result === 'string' && result) {
-             // Beri pembatas jika sudah ada isinya
              if (context.accumulatedData) {
                context.accumulatedData += "\n\n---\n\n";
              }
              context.accumulatedData += result;
           }
 
-          // Emit Event RxJS
           context.events$.next({
             type: 'LOG',
             nodeId: currentNode.id,
@@ -125,7 +119,6 @@ export class GraphRunner {
         }
       }
 
-      // Lanjut ke tetangga (Traversal)
       const outgoingEdges = this.edges.filter(e => e.source === currentNode.id);
 
       for (const edge of outgoingEdges) {
@@ -138,7 +131,6 @@ export class GraphRunner {
       }
     }
 
-    // Selesai: Complete Stream
     context.events$.complete();
   }
 }

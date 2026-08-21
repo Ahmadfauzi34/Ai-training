@@ -1,7 +1,7 @@
-import { EntityManifold } from '../core/EntityManifold.js';
-import type { TensorVector } from '../core/config.js';
-import { GLOBAL_DIMENSION, MAX_ENTITIES, MAX_HYPOTHESES, MAX_SEEDS } from '../core/config.js';
-import { EntanglementOptimizer } from './EntanglementOptimizer.js';
+import { EntityManifold } from '../core/EntityManifold.ts';
+import type { TensorVector } from '../core/config.ts';
+import { GLOBAL_DIMENSION, MAX_ENTITIES, MAX_HYPOTHESES, MAX_SEEDS } from '../core/config.ts';
+import { EntanglementOptimizer } from './EntanglementOptimizer.ts';
 
 /**
  * 🌊 WAVE DYNAMICS (Fase 4)

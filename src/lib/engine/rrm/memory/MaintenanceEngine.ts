@@ -1,7 +1,7 @@
-import type { TensorVector } from '../core/config.js';
-import { GLOBAL_DIMENSION, MAX_ENTITIES, MAX_HYPOTHESES, MAX_SEEDS } from '../core/config.js';
-import { LogicSeedBank } from './logic-seed-bank.js';
-import { PDRLogger } from '../shared/logger.js';
+import type { TensorVector } from '../core/config.ts';
+import { GLOBAL_DIMENSION, MAX_ENTITIES, MAX_HYPOTHESES, MAX_SEEDS } from '../core/config.ts';
+import { LogicSeedBank } from './logic-seed-bank.ts';
+import { PDRLogger } from '../shared/logger.ts';
 
 /**
  * 🛠️ MAINTENANCE ENGINE (The Quantum Annealer)
