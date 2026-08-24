@@ -5,6 +5,7 @@
   
   // IMPORT ENGINE BARU KITA
   import { GraphRunner } from '../engine/GraphRunner.ts';
+  import { executeLabCommand } from '../commands/labCommands.ts';
 
   async function sendMessage() {
     // 1. Validasi Input Kosong
@@ -13,6 +14,16 @@
     const userMsg = appState.input;
     addLog('user', userMsg);
     appState.input = ""; // Kosongkan input segera
+
+    // Perintah berawalan "/" dieksekusi lokal dan tidak pernah memanggil LLM.
+    const commandResult = executeLabCommand(userMsg, appState.nodes, appState.edges);
+    if (commandResult.handled) {
+      if (commandResult.nodes) appState.nodes = commandResult.nodes;
+      if (commandResult.edges) appState.edges = commandResult.edges;
+      if (commandResult.nodes || commandResult.edges) appState.lastChange = Date.now();
+      addLog('system', commandResult.message || 'Perintah selesai.');
+      return;
+    }
 
     // --- CARA BARU: DELEGASIKAN KE ENGINE ---
     try {
@@ -58,7 +69,7 @@
       aria-label="Ketik pesan Anda"
       bind:value={appState.input}
       class="flex-1 bg-nord-panel border border-nord-border rounded px-4 py-3 outline-none focus:border-nord-primary transition text-sm text-nord-text"
-      placeholder="Tanya Hono..."
+      placeholder="Ketik pesan atau /help untuk perintah lab..."
     />
     <button
       type="submit"
