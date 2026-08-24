@@ -1,3 +1,5 @@
+new sesion read skill.md ini tools/ai_studio_tool
+
 # PLR — Proof Logic Reasoning Kernel
 
 ## 0. PURPOSE
