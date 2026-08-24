@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import { StrictAssertions } from '../../../scripts/test-runner/src/core/test-runner.ts';
 import { asEdgeId, asNodeId } from '../types/core.ts';
 import type { AppEdge } from '../types/edges.ts';
-import type { AppNode } from '../types/nodes.ts';
+import type { ActionNodeData, AppNode } from '../types/nodes.ts';
 import { executeLabCommand } from './labCommands.ts';
 
 const actionNode = {
@@ -36,8 +36,8 @@ describe('Lab chat commands', () => {
     const result = executeLabCommand('/set action-1 prompt jawaban harus ringkas', [actionNode], []);
 
     StrictAssertions.strictEqual(result.handled, true);
-    StrictAssertions.strictEqual(result.nodes![0]!.data.prompt, 'jawaban harus ringkas');
-    StrictAssertions.strictEqual(actionNode.data.prompt, 'old prompt');
+    StrictAssertions.strictEqual((result.nodes![0]!.data as ActionNodeData).prompt, 'jawaban harus ringkas');
+    StrictAssertions.strictEqual((actionNode.data as ActionNodeData).prompt, 'old prompt');
   });
 
   it('connects and disconnects nodes', () => {

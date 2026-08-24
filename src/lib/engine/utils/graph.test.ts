@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import { StrictAssertions } from '../../../../scripts/test-runner/src/core/test-runner.ts';
 import { asNodeId } from '../../types/core.ts';
 import type { AppEdge } from '../../types/edges.ts';
-import { buildOutgoingIndex } from './graph.ts';
+import { buildExecutionPlan, buildOutgoingIndex } from './graph.ts';
 
 describe('Graph edge index', () => {
   it('groups targets by source while preserving edge order', () => {
@@ -26,5 +26,52 @@ describe('Graph edge index', () => {
     const index = buildOutgoingIndex([]);
 
     StrictAssertions.strictEqual(index.size, 0);
+  });
+});
+
+describe('Graph execution plan', () => {
+  it('waits for every parent before scheduling a converging node', () => {
+    const input = asNodeId('input');
+    const left = asNodeId('left');
+    const right = asNodeId('right');
+    const join = asNodeId('join');
+    const edges = [
+      { source: input, target: left },
+      { source: input, target: right },
+      { source: left, target: join },
+      { source: right, target: join }
+    ] as AppEdge[];
+
+    const plan = buildExecutionPlan([input, left, right, join], edges, [input]);
+
+    StrictAssertions.deepStrictEqual(plan.orderedNodeIds, [input, left, right, join]);
+    StrictAssertions.deepStrictEqual(plan.blockedNodeIds, []);
+  });
+
+  it('reports nodes blocked by a reachable dependency cycle', () => {
+    const input = asNodeId('input');
+    const first = asNodeId('first');
+    const second = asNodeId('second');
+    const edges = [
+      { source: input, target: first },
+      { source: first, target: second },
+      { source: second, target: first }
+    ] as AppEdge[];
+
+    const plan = buildExecutionPlan([input, first, second], edges, [input]);
+
+    StrictAssertions.deepStrictEqual(plan.orderedNodeIds, [input]);
+    StrictAssertions.deepStrictEqual(plan.blockedNodeIds, [first, second]);
+  });
+
+  it('does not schedule graph components unreachable from the selected input', () => {
+    const input = asNodeId('input');
+    const reachable = asNodeId('reachable');
+    const isolated = asNodeId('isolated');
+    const edges = [{ source: input, target: reachable }] as AppEdge[];
+
+    const plan = buildExecutionPlan([input, reachable, isolated], edges, [input]);
+
+    StrictAssertions.deepStrictEqual(plan.orderedNodeIds, [input, reachable]);
   });
 });

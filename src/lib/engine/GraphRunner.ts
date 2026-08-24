@@ -4,7 +4,7 @@ import { executeRag } from './handlers/RagHandler';
 import { executeAction } from './handlers/ActionHandler';
 import { executeMath } from './handlers/MathHandler';
 import { executeRRM } from './handlers/RRMHandler';
-import { buildOutgoingIndex } from './utils/graph';
+import { buildExecutionPlan } from './utils/graph';
 import { appState } from '../state.svelte'; 
 
 import type { 
@@ -52,13 +52,28 @@ export class GraphRunner {
       return;
     }
 
-    let startNodes = this.nodes.filter(n => n.type === 'input');
+    let startNodes: AppNode[] = this.nodes.filter(n => n.type === 'input');
 
     if (startNodes.length === 0) {
       // Fallback: Cari node yang tidak punya in-edges (root nodes)
       const targetNodeIds = new Set(this.edges.map(e => e.target));
       const rootNodes = this.nodes.filter(n => !targetNodeIds.has(n.id));
-      startNodes = rootNodes.length > 0 ? rootNodes : [this.nodes[0]];
+      startNodes = rootNodes.length > 0 ? rootNodes : this.nodes[0] ? [this.nodes[0]] : [];
+    }
+
+    const nodeMap = new Map(this.nodes.map(n => [n.id, n]));
+    const executionPlan = buildExecutionPlan(
+      this.nodes.map(node => node.id),
+      this.edges,
+      startNodes.map(node => node.id)
+    );
+
+    if (executionPlan.blockedNodeIds.length > 0) {
+      this.onLog(
+        'system',
+        `❌ Graph memiliki dependency cycle. Eksekusi dibatalkan: ${executionPlan.blockedNodeIds.join(', ')}`
+      );
+      return;
     }
 
     // Safe environment setup
@@ -85,18 +100,10 @@ export class GraphRunner {
       events$: new Subject() 
     };
 
-    const queue: AppNode[] = [...startNodes];
-    let queueIndex = 0;
-    const visited = new Set<NodeId>(startNodes.map(n => n.id));
-    const nodeMap = new Map(this.nodes.map(n => [n.id, n]));
-    const outgoingIndex = buildOutgoingIndex(this.edges);
-
     this.onLog('system', '🌊 Engine: Memulai eksekusi Graph Runner...');
 
-    // A cursor avoids Array.shift(), which moves every remaining queue item on
-    // each iteration and makes traversal quadratic for large graphs.
-    while (queueIndex < queue.length) {
-      const currentNode = queue[queueIndex++];
+    for (const nodeId of executionPlan.orderedNodeIds) {
+      const currentNode = nodeMap.get(nodeId);
       if (!currentNode) continue;
 
       const handler = HANDLERS[currentNode.type];
@@ -124,16 +131,6 @@ export class GraphRunner {
         }
       }
 
-      const outgoingNodeIds = outgoingIndex.get(currentNode.id) ?? [];
-
-      for (const targetId of outgoingNodeIds) {
-        const nextNode = nodeMap.get(targetId);
-
-        if (nextNode && !visited.has(nextNode.id)) {
-          visited.add(nextNode.id);
-          queue.push(nextNode);
-        }
-      }
     }
 
     context.events$.complete();
