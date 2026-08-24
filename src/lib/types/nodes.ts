@@ -33,12 +33,21 @@ export interface RRMNodeData extends BaseNodeData {
   customParams?: Record<string, any>;
 }
 
+export interface SwarmNodeData extends BaseNodeData {
+  agentCount: number;
+  cohesion: number;
+  separation: number;
+  alignment: number;
+  iterations?: number;
+}
+
 export type AppNodeData = 
   | InputNodeData 
   | ActionNodeData 
   | MemoryNodeData 
   | MatrixNodeData
-  | RRMNodeData;
+  | RRMNodeData
+  | SwarmNodeData;
 
 // --- NODE INTERFACES ---
 export interface BaseNode {
@@ -59,10 +68,12 @@ export interface ActionNode extends BaseNode { type: 'action'; data: ActionNodeD
 export interface MemoryNode extends BaseNode { type: 'rag_memory'; data: MemoryNodeData; }
 export interface MathNode extends BaseNode { type: 'math_op'; data: MatrixNodeData; }
 export interface RRMNode extends BaseNode { type: 'rrm_reasoning'; data: RRMNodeData; }
+export interface SwarmNode extends BaseNode { type: 'swarm_sim'; data: SwarmNodeData; }
 
 export type AppNode = 
   | InputNode 
   | ActionNode 
   | MemoryNode 
   | MathNode
-  | RRMNode;
+  | RRMNode
+  | SwarmNode;
