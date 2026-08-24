@@ -4,6 +4,7 @@ import { executeRag } from './handlers/RagHandler';
 import { executeAction } from './handlers/ActionHandler';
 import { executeMath } from './handlers/MathHandler';
 import { executeRRM } from './handlers/RRMHandler';
+import { buildOutgoingIndex } from './utils/graph';
 import { appState } from '../state.svelte'; 
 
 import type { 
@@ -84,15 +85,19 @@ export class GraphRunner {
       events$: new Subject() 
     };
 
-    let queue: AppNode[] = [...startNodes];
-    let visited = new Set<NodeId>(startNodes.map(n => n.id));
+    const queue: AppNode[] = [...startNodes];
+    let queueIndex = 0;
+    const visited = new Set<NodeId>(startNodes.map(n => n.id));
     const nodeMap = new Map(this.nodes.map(n => [n.id, n]));
+    const outgoingIndex = buildOutgoingIndex(this.edges);
 
     this.onLog('system', '🌊 Engine: Memulai eksekusi Graph Runner...');
 
-    while (queue.length > 0) {
-      const currentNode = queue.shift(); 
-      if (!currentNode) continue; 
+    // A cursor avoids Array.shift(), which moves every remaining queue item on
+    // each iteration and makes traversal quadratic for large graphs.
+    while (queueIndex < queue.length) {
+      const currentNode = queue[queueIndex++];
+      if (!currentNode) continue;
 
       const handler = HANDLERS[currentNode.type];
       if (handler) {
@@ -119,10 +124,10 @@ export class GraphRunner {
         }
       }
 
-      const outgoingEdges = this.edges.filter(e => e.source === currentNode.id);
+      const outgoingNodeIds = outgoingIndex.get(currentNode.id) ?? [];
 
-      for (const edge of outgoingEdges) {
-        const nextNode = nodeMap.get(edge.target);
+      for (const targetId of outgoingNodeIds) {
+        const nextNode = nodeMap.get(targetId);
 
         if (nextNode && !visited.has(nextNode.id)) {
           visited.add(nextNode.id);
