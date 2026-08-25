@@ -5,3 +5,4 @@ export * from './nodes';
 export * from './edges';
 export * from './engine';
 export * from './state';
+export * from './rrm';

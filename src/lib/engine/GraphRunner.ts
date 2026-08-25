@@ -4,6 +4,7 @@ import { executeRag } from './handlers/RagHandler';
 import { executeAction } from './handlers/ActionHandler';
 import { executeMath } from './handlers/MathHandler';
 import { executeRRM } from './handlers/RRMHandler';
+import { buildExecutionPlan } from './utils/graph';
 import { appState } from '../state.svelte'; 
 
 import type { 
@@ -12,14 +13,15 @@ import type {
   EngineContext, 
   LoggerFunction, 
   NodeId, 
-  LogRole
+  LogRole,
+  NodeResult
 } from '../types';
 
 type NodeHandler = (
   node: AppNode, 
   context: EngineContext, 
   logger: LoggerFunction
-) => Promise<string | void>;
+) => Promise<NodeResult | void>;
 
 const HANDLERS: Record<string, NodeHandler> = {
   'rag_memory': executeRag as unknown as NodeHandler,
@@ -51,13 +53,28 @@ export class GraphRunner {
       return;
     }
 
-    let startNodes = this.nodes.filter(n => n.type === 'input');
+    let startNodes: AppNode[] = this.nodes.filter(n => n.type === 'input');
 
     if (startNodes.length === 0) {
       // Fallback: Cari node yang tidak punya in-edges (root nodes)
       const targetNodeIds = new Set(this.edges.map(e => e.target));
       const rootNodes = this.nodes.filter(n => !targetNodeIds.has(n.id));
-      startNodes = rootNodes.length > 0 ? rootNodes : [this.nodes[0]];
+      startNodes = rootNodes.length > 0 ? rootNodes : this.nodes[0] ? [this.nodes[0]] : [];
+    }
+
+    const nodeMap = new Map(this.nodes.map(n => [n.id, n]));
+    const executionPlan = buildExecutionPlan(
+      this.nodes.map(node => node.id),
+      this.edges,
+      startNodes.map(node => node.id)
+    );
+
+    if (executionPlan.blockedNodeIds.length > 0) {
+      this.onLog(
+        'system',
+        `❌ Graph memiliki dependency cycle. Eksekusi dibatalkan: ${executionPlan.blockedNodeIds.join(', ')}`
+      );
+      return;
     }
 
     // Safe environment setup
@@ -84,15 +101,11 @@ export class GraphRunner {
       events$: new Subject() 
     };
 
-    let queue: AppNode[] = [...startNodes];
-    let visited = new Set<NodeId>(startNodes.map(n => n.id));
-    const nodeMap = new Map(this.nodes.map(n => [n.id, n]));
-
     this.onLog('system', '🌊 Engine: Memulai eksekusi Graph Runner...');
 
-    while (queue.length > 0) {
-      const currentNode = queue.shift(); 
-      if (!currentNode) continue; 
+    for (const nodeId of executionPlan.orderedNodeIds) {
+      const currentNode = nodeMap.get(nodeId);
+      if (!currentNode) continue;
 
       const handler = HANDLERS[currentNode.type];
       if (handler) {
@@ -119,16 +132,6 @@ export class GraphRunner {
         }
       }
 
-      const outgoingEdges = this.edges.filter(e => e.source === currentNode.id);
-
-      for (const edge of outgoingEdges) {
-        const nextNode = nodeMap.get(edge.target);
-
-        if (nextNode && !visited.has(nextNode.id)) {
-          visited.add(nextNode.id);
-          queue.push(nextNode);
-        }
-      }
     }
 
     context.events$.complete();

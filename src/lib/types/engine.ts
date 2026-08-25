@@ -3,6 +3,7 @@ import type { Matrix } from '../engine/math/Matrix';
 import type { NodeId } from './core';
 import type { AppNode } from './nodes';
 import type { AppEdge } from './edges';
+import type { RRMNodeResult } from './rrm';
 
 // 👇 1. Import RxJS Subject
 import { Subject } from 'rxjs';
@@ -23,7 +24,7 @@ export interface EngineContext {
   };
 
   // Kotak Surat Output
-  nodeResults: Map<NodeId, any>; 
+  nodeResults: Map<NodeId, NodeResult>;
 
   // Registry Matrix
   tensorRegistry?: Map<NodeId, Matrix>; 
@@ -37,6 +38,8 @@ export interface EngineContext {
   // 👇 2. Global Event Stream (Nadi Aplikasi)
   events$: Subject<EngineEvent>;
 }
+
+export type NodeResult = string | Matrix | RRMNodeResult | null;
 
 export type LogRole = 'system' | 'user' | 'ai' | 'engine';
 export type LoggerFunction = (role: LogRole, text: string) => void;

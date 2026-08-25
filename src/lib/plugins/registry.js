@@ -44,6 +44,6 @@ export const NODE_REGISTRY = {
     label: 'RRM Reasoning',
     icon: Orbit,
     description: 'Quantum/VSA Engine untuk HDC Reasoning',
-    defaultData: { label: 'RRM Reasoner', mode: 'sandbox' }
+    defaultData: { label: 'RRM Reasoner', mode: 'plr_proof' }
   }
 };

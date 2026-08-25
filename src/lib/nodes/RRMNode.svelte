@@ -1,20 +1,52 @@
-<script>
+<script lang="ts">
   import { useSvelteFlow, Handle, Position } from '@xyflow/svelte';
   import { BrainCircuit, Settings, ChevronUp } from 'lucide-svelte';
   import { appState } from '../state.svelte.ts';
+  import { normalizeRRMMode, RRM_MODE_OPTIONS } from '../types/rrm.ts';
+  import type { RRMMode } from '../types/rrm.ts';
+  import type { RRMNodeData } from '../types/nodes.ts';
 
-  let { id, data, isConnectable } = $props();
+  interface Props {
+    id: string;
+    data: RRMNodeData;
+    isConnectable?: boolean;
+  }
+
+  let { id, data, isConnectable = true }: Props = $props();
   const { updateNodeData } = useSvelteFlow();
 
   let expanded = $state(false);
   const uid = crypto.randomUUID();
 
-  function updateField(field, value) {
-    updateNodeData(id, { [field]: value });
+  function updateMode(value: RRMMode) {
+    updateNodeData(id, { mode: value });
     appState.lastChange = Date.now();
   }
 
+  function handleModeChange(event: Event) {
+    updateMode((event.currentTarget as HTMLSelectElement).value as RRMMode);
+  }
+
+  function handleSymbolInput(event: Event) {
+    updateNodeData(id, { symbol: (event.currentTarget as HTMLInputElement).value });
+    appState.lastChange = Date.now();
+  }
+
+  function formatExecutionOutput(value: unknown): string {
+    if (typeof value === 'string') return value;
+    if (!value || typeof value !== 'object') return '';
+    if ('kind' in value && value.kind === 'rrm.hypervector' && 'label' in value && 'vector' in value) {
+      return `${String(value.label)} [${(value.vector as Float32Array).length}D]`;
+    }
+    if ('kind' in value && value.kind === 'rrm.similarity' && 'score' in value) {
+      return `Similarity: ${Number(value.score).toFixed(6)}`;
+    }
+    return JSON.stringify(value);
+  }
+
   let executionOutput = $derived(appState.executionResults?.[id] || '');
+  let executionOutputText = $derived(formatExecutionOutput(executionOutput));
+  let selectedMode = $derived(normalizeRRMMode(data.mode) || 'plr_proof');
 </script>
 
 <div class={`shadow-xl rounded-lg border-2 transition-all duration-300 bg-nord-panel ${expanded ? 'border-nord-primary w-72' : 'border-nord-border w-44'}`}>
@@ -41,26 +73,43 @@
         <label for={`mode-${uid}`} class="text-[9px] font-mono text-nord-light uppercase block mb-1">Mode RRM</label>
         <select
           id={`mode-${uid}`}
-          value={data.mode || 'plr_proof'}
-          onchange={(e) => updateField('mode', e.target.value)}
+          value={selectedMode}
+          onchange={handleModeChange}
           class="nodrag w-full bg-nord-dark border border-nord-border rounded text-xs text-nord-text p-1 outline-none focus:border-nord-primary"
         >
-          <option value="plr_proof">PLR Proof State Kernel</option>
-          <option value="sandbox">Quantum Sandbox</option>
-          <option value="fhrr">VSA / FHRR Calc</option>
-          <option value="entanglement">Entanglement Optimizer</option>
+          {#each RRM_MODE_OPTIONS as option}
+            <option value={option.value} disabled={!option.implemented}>
+              {option.label}{option.implemented ? '' : ' (belum aktif)'}
+            </option>
+          {/each}
         </select>
+        <div class="mt-1 text-[9px] text-nord-light leading-tight">
+          {RRM_MODE_OPTIONS.find(option => option.value === selectedMode)?.description}
+        </div>
       </div>
 
-      {#if executionOutput}
+      {#if selectedMode === 'fhrr_encode'}
+        <div>
+          <label for={`symbol-${uid}`} class="text-[9px] font-mono text-nord-light uppercase block mb-1">Symbol</label>
+          <input
+            id={`symbol-${uid}`}
+            value={data.symbol || ''}
+            oninput={handleSymbolInput}
+            placeholder="contoh: APPLE"
+            class="nodrag w-full bg-nord-dark border border-nord-border rounded text-xs text-nord-text p-2 outline-none focus:border-nord-primary"
+          />
+        </div>
+      {/if}
+
+      {#if executionOutputText}
         <div class="p-2 bg-nord-dark/80 rounded border border-nord-border text-[10px] font-mono text-nord-light max-h-32 overflow-y-auto whitespace-pre-wrap">
-          {executionOutput}
+          {executionOutputText}
         </div>
       {/if}
     </div>
-  {:else if executionOutput}
+  {:else if executionOutputText}
     <div class="px-2 py-1 text-[9px] font-mono text-nord-light truncate border-t border-nord-border bg-nord-dark/50">
-      ▶ {executionOutput.slice(0, 30)}...
+      ▶ {executionOutputText.slice(0, 30)}...
     </div>
   {/if}
 

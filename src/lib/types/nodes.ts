@@ -1,5 +1,6 @@
 // src/lib/types/nodes.ts
 import type { NodeId } from './core';
+import type { RRMMode } from './rrm';
 
 // --- DATA DEFINITIONS ---
 export interface BaseNodeData {
@@ -29,7 +30,8 @@ export interface MatrixNodeData extends BaseNodeData {
 }
 
 export interface RRMNodeData extends BaseNodeData {
-  mode: 'sandbox' | 'fhrr' | 'entanglement';
+  mode: RRMMode;
+  symbol?: string;
   customParams?: Record<string, any>;
 }
 

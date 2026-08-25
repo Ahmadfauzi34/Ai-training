@@ -26,7 +26,7 @@ const defaultNodes: AppNode[] = [
     type: 'rrm_reasoning',
     data: {
       label: 'RRM Reasoner',
-      mode: 'sandbox'
+      mode: 'plr_proof'
     },
     position: { x: 700, y: 80 },
   }
