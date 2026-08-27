@@ -12,7 +12,7 @@ export class RRMNodeAdapter {
     public static runSandbox(inputTensor?: Float32Array): string {
         try {
             const sandbox = new MultiverseSandbox();
-            return `RRM Sandbox Initialized. Entitas Maksimum: ${sandbox['mvIds'][0].length}`;
+            return `RRM Sandbox Initialized. Entitas Maksimum: ${sandbox.getUniverse(0).ids.length}`;
         } catch (e: any) {
             return `RRM Error: ${e.message}`;
         }
@@ -30,15 +30,16 @@ export class RRMNodeAdapter {
             if (inputContext) {
                 const sentences = inputContext.split(/\n+|\. /).map(s => s.trim()).filter(s => s.length > 5);
                 for (let i = 0; i < sentences.length; i++) {
+                    const sentence = sentences[i]!;
                     if (i % 2 === 0) {
-                        plr.addPremise(sentences[i]);
+                        plr.addPremise(sentence);
                     } else {
-                        plr.addEvidence(sentences[i]);
+                        plr.addEvidence(sentence);
                     }
                 }
 
                 if (sentences.length >= 2) {
-                    plr.derive(['PREM_1', 'EVID_2'], 'MODUS_PONENS', `Inference dari ${sentences[0].slice(0, 30)}...`);
+                    plr.derive(['PREM_1', 'EVID_2'], 'MODUS_PONENS', `Inference dari ${sentences[0]!.slice(0, 30)}...`);
                 }
             } else {
                 plr.addPremise('Semua sistem RRM beroperasi pada aljabar FHRR branchless');

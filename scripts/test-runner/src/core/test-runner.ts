@@ -125,8 +125,8 @@ export class StrictAssertions {
    * Pre-allocated iteration, no closure allocation
    */
   static arrayNearEqual(
-    actual: ReadonlyArray<number>,
-    expected: ReadonlyArray<number>,
+    actual: ArrayLike<number>,
+    expected: ArrayLike<number>,
     epsilon: number = DEFAULT_EPSILON,
     message?: string
   ): void {

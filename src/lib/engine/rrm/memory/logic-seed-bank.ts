@@ -129,8 +129,8 @@ class LRUCache<K, V> {
         if (this.cache.has(key)) {
             this.cache.delete(key);
         } else if (this.cache.size >= this.maxSize) {
-            const firstKey = this.cache.keys().next().value;
-            this.cache.delete(firstKey);
+            const oldestEntry = this.cache.keys().next();
+            if (!oldestEntry.done) this.cache.delete(oldestEntry.value);
         }
         this.cache.set(key, value);
     }

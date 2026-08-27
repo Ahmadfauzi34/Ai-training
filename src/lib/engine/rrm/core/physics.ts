@@ -35,9 +35,11 @@ export class Physics {
         let mag1 = 0;
         let mag2 = 0;
         for (let i = 0; i < vec1.length; i++) {
-            dot += vec1[i] * vec2[i];
-            mag1 += vec1[i] * vec1[i];
-            mag2 += vec2[i] * vec2[i];
+            const left = vec1[i]!;
+            const right = vec2[i]!;
+            dot += left * right;
+            mag1 += left * left;
+            mag2 += right * right;
         }
         return dot / (Math.sqrt(mag1) * Math.sqrt(mag2) + 1e-9);
     }

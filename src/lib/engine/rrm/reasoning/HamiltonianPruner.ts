@@ -80,7 +80,7 @@ export class HamiltonianPruner {
             const fadingFactor = energy;
             const tensor = this.getTensor(i);
             for (let d = 0; d < GLOBAL_DIMENSION; d++) {
-                tensor[d] *= fadingFactor;
+                tensor[d]! *= fadingFactor;
             }
 
             // Batas Kematian (Minimum Description Length Pruning)
@@ -128,7 +128,7 @@ export class HamiltonianPruner {
         const fadingFactor = Math.max(0.0, energy);
         const tensor = this.getTensor(index);
         for (let d = 0; d < GLOBAL_DIMENSION; d++) {
-            tensor[d] *= fadingFactor;
+            tensor[d]! *= fadingFactor;
         }
 
         // Kematian Instan

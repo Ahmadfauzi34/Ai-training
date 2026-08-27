@@ -28,7 +28,7 @@ export class GlobalBlackboard {
         // 2. Superposisi semua pemikiran agen (Interferensi Konstruktif)
         for (const state of agentStates) {
             for (let i = 0; i < GLOBAL_DIMENSION; i++) {
-                this.collectiveState[i] += state[i]!;
+                this.collectiveState[i]! += state[i]!;
             }
         }
 
@@ -41,7 +41,7 @@ export class GlobalBlackboard {
         // Math Branchless Normalization
         const invMag = 1.0 / (Math.sqrt(magSq) + 1e-15);
         for (let i = 0; i < GLOBAL_DIMENSION; i++) {
-            this.collectiveState[i] *= invMag;
+            this.collectiveState[i]! *= invMag;
         }
     }
 
@@ -68,7 +68,7 @@ export class GlobalBlackboard {
         }
         const invMag = 1.0 / (Math.sqrt(magSq) + 1e-15);
         for (let i = 0; i < GLOBAL_DIMENSION; i++) {
-            bound[i] *= invMag;
+            bound[i]! *= invMag;
         }
 
         return bound;

@@ -137,7 +137,7 @@ export class FWHTContext {
 
         // Perkalian skalar di ruang Spektrum Hadamard
         for (let i = 0; i < N; i++) {
-            a[i] *= bClone[i]!;
+            a[i]! *= bClone[i]!;
         }
 
         this.inverse1D(a, bipolarOutput);

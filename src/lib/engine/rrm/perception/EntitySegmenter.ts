@@ -116,7 +116,7 @@ export class EntitySegmenter {
 
     private addVectorInPlace(target: TensorVector, source: TensorVector): void {
         for (let i = 0; i < GLOBAL_DIMENSION; i++) {
-            target[i] += source[i]!;
+            target[i]! += source[i]!;
         }
     }
 }

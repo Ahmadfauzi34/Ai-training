@@ -73,7 +73,7 @@ export class KnowledgeBase {
         reconstructedTensor.set(baseSeed);
 
         // Bind berurutan untuk sisa komponen
-        let currentTensor = reconstructedTensor;
+        let currentTensor: Float32Array = reconstructedTensor;
         for (let i = 1; i < trace.composition.length; i++) {
             const comp = trace.composition[i]!;
             const seedVector = this.resolveSeedVector(comp.seed, comp.phase);
