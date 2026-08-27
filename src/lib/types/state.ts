@@ -11,7 +11,7 @@ export interface LogMessage {
 
 export interface V76State {
   isReady: boolean;
-  status: 'idle' | 'running' | 'error'; 
+  status: string;
   activeTab: 'chat' | 'brain' | 'config';
   lastChange: number;
   logs: LogMessage[];

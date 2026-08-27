@@ -1,11 +1,14 @@
-<script>
+<script lang="ts">
   // --- 1. IMPORTS LIBRARY ---
   import { 
     SvelteFlow, 
     Background, 
     Controls, 
     addEdge, 
-    MarkerType 
+    MarkerType,
+    type EdgeEvents,
+    type NodeTypes,
+    type OnConnect
   } from '@xyflow/svelte';
   import '@xyflow/svelte/dist/style.css';
 
@@ -17,19 +20,26 @@
   import { appState, addLog } from './state.svelte.ts'; 
   import { NODE_REGISTRY } from './plugins/registry.js';
   import { GraphRunner } from './engine/GraphRunner';
+  import { asNodeId, type AppEdge, type AppNode } from './types';
 
   // --- 3. STATE MANAGEMENT ---
   let isDrawerOpen = $state(false);
   let isRunning = $state(false); // Status loading saat run
 
   // Generate Tipe Node dari Registry
-  const nodeTypes = Object.fromEntries(
-    Object.entries(NODE_REGISTRY).map(([key, val]) => [key, val.component])
+  type RegisteredNodeType = keyof typeof NODE_REGISTRY;
+
+  const registryEntries = (Object.keys(NODE_REGISTRY) as RegisteredNodeType[]).map(
+    (type) => [type, NODE_REGISTRY[type]] as const
   );
+
+  const nodeTypes = Object.fromEntries(
+    registryEntries.map(([key, val]) => [key, val.component])
+  ) as NodeTypes;
 
   // --- 4. GRAPH HANDLERS (CONNECT & CLICK) ---
 
-  const onConnect = (connection) => {
+  const onConnect: OnConnect = (connection) => {
     const newEdge = {
       ...connection,
       type: 'smoothstep', // Gaya kabel siku-siku (Engineering Style)
@@ -37,11 +47,10 @@
       style: "stroke: #88c0d0; stroke-width: 2;",
       markerEnd: { type: MarkerType.ArrowClosed, color: '#88c0d0' },
     };
-    appState.edges = addEdge(newEdge, appState.edges);
+    appState.edges = addEdge<AppEdge>(newEdge, appState.edges);
   };
 
-  const onEdgeClick = (event, edge) => {
-    if (!edge || !edge.id) return;
+  const onEdgeClick: NonNullable<EdgeEvents<AppEdge>['onedgeclick']> = ({ edge }) => {
     // Hapus kabel saat diklik
     appState.edges = appState.edges.filter(e => e.id !== edge.id);
   };
@@ -53,18 +62,18 @@
     appState.edges = appState.edges.filter(e => !e.selected);
   };
 
-  function addNode(type) {
+  function addNode(type: RegisteredNodeType) {
     const def = NODE_REGISTRY[type];
     if (!def) return;
 
-    const id = crypto.randomUUID();
+    const id = asNodeId(crypto.randomUUID());
     const newNode = {
       id: id,
       type: type,
       // Random position biar gak numpuk
       position: { x: Math.random() * 300 + 100, y: Math.random() * 300 + 100 },
       data: { ...def.defaultData } 
-    };
+    } as AppNode;
     appState.nodes = [...appState.nodes, newNode];
     isDrawerOpen = false; 
   }
@@ -90,8 +99,9 @@
       // C. Jalankan!
       await engine.run("MANUAL_TRIGGER");
 
-    } catch (e) {
-      addLog('system', `❌ Error: ${e.message}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      addLog('system', `❌ Error: ${message}`);
     } finally {
       isRunning = false;
     }
@@ -105,12 +115,12 @@
     bind:nodes={appState.nodes} 
     bind:edges={appState.edges} 
     {nodeTypes}
-    {onConnect} 
+    onconnect={onConnect}
     onedgeclick={onEdgeClick}
     fitView
     class="bg-nord-bg"
   >
-    <Background color="#4c566a" gap={25} size={1} />
+    <Background patternColor="#4c566a" gap={25} size={1} />
     <Controls class="bg-nord-panel border-nord-border text-nord-text fill-nord-text" />
 
     <!-- --- FLOATING CONTROLS (TOP RIGHT) --- -->
@@ -165,7 +175,7 @@
 
           <!-- Plugin List -->
           <div class="flex-1 overflow-y-auto space-y-3">
-            {#each Object.entries(NODE_REGISTRY) as [type, def]}
+            {#each registryEntries as [type, def]}
               {@const Icon = def.icon}
 
               <button 

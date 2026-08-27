@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "test": "node --experimental-strip-types scripts/run-tests.ts",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
     "check:test-runner": "tsc -p tsconfig.test-runner.json",
     "dev": "vite",
     "build": "vite build",

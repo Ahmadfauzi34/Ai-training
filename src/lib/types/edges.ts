@@ -1,22 +1,11 @@
 // src/lib/types/edges.ts
 import type { EdgeId, NodeId } from './core';
+import type { Edge } from '@xyflow/svelte';
 
-export type EdgeMarkerType = {
-  type: string;
-  color?: string;
-  width?: number;
-  height?: number;
-};
+export type EdgeMarkerType = NonNullable<Edge['markerEnd']>;
 
-export interface AppEdge {
+export type AppEdge = Omit<Edge, 'id' | 'source' | 'target'> & {
   id: EdgeId;
   source: NodeId;
   target: NodeId;
-  sourceHandle?: string;
-  targetHandle?: string;
-  type?: string;
-  animated?: boolean;
-  markerEnd?: EdgeMarkerType;
-  selected?: boolean;
-  style?: string;
-}
+};

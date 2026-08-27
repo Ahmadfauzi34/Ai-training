@@ -1,6 +1,7 @@
 // src/lib/state.svelte.ts
 import { storage } from './storage.js'; 
 import { type V76State, type AppNode, type AppEdge, type LogRole, asNodeId } from './types';
+import { Position } from '@xyflow/svelte';
 
 const defaultNodes: AppNode[] = [
   {
@@ -8,7 +9,7 @@ const defaultNodes: AppNode[] = [
     type: 'input',
     data: { label: 'START SYSTEM', inputType: 'text' },
     position: { x: 50, y: 100 }, 
-    sourcePosition: 'right', 
+    sourcePosition: Position.Right,
     style: "background: #88c0d0; color: #2e3440; border: none; font-weight: bold; width: 120px; text-align: center; border-radius: 8px;"
   },
   {
@@ -79,6 +80,6 @@ export function addLog(role: LogRole, text: string) {
   appState.logs = [...appState.logs, { role, text, timestamp: Date.now() }];
 }
 
-export function setStatus(msg: 'idle' | 'running' | 'error') {
+export function setStatus(msg: string) {
   appState.status = msg;
 }

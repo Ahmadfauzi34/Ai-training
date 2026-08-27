@@ -1,8 +1,9 @@
 // src/lib/types/nodes.ts
 import type { NodeId } from './core';
+import type { Node } from '@xyflow/svelte';
 
 // --- DATA DEFINITIONS ---
-export interface BaseNodeData {
+export interface BaseNodeData extends Record<string, unknown> {
   label?: string;
 }
 
@@ -30,7 +31,7 @@ export interface MatrixNodeData extends BaseNodeData {
 
 export interface RRMNodeData extends BaseNodeData {
   mode: 'sandbox' | 'plr_proof' | 'fhrr' | 'entanglement';
-  customParams?: Record<string, any>;
+  customParams?: Record<string, unknown>;
 }
 
 export type AppNodeData = 
@@ -41,24 +42,13 @@ export type AppNodeData =
   | RRMNodeData;
 
 // --- NODE INTERFACES ---
-export interface BaseNode {
-  id: NodeId;
-  position: { x: number; y: number };
-  width?: number;
-  height?: number;
-  selected?: boolean;
-  dragHandle?: string;
-  sourcePosition?: string;
-  targetPosition?: string;
-  style?: string;
-  class?: string;
-}
+export type BaseNode = Omit<Node, 'id' | 'data' | 'type'> & { id: NodeId };
 
-export interface InputNode extends BaseNode { type: 'input'; data: InputNodeData; }
-export interface ActionNode extends BaseNode { type: 'action'; data: ActionNodeData; }
-export interface MemoryNode extends BaseNode { type: 'rag_memory'; data: MemoryNodeData; }
-export interface MathNode extends BaseNode { type: 'math_op'; data: MatrixNodeData; }
-export interface RRMNode extends BaseNode { type: 'rrm_reasoning'; data: RRMNodeData; }
+export type InputNode = BaseNode & { type: 'input'; data: InputNodeData };
+export type ActionNode = BaseNode & { type: 'action'; data: ActionNodeData };
+export type MemoryNode = BaseNode & { type: 'rag_memory'; data: MemoryNodeData };
+export type MathNode = BaseNode & { type: 'math_op'; data: MatrixNodeData };
+export type RRMNode = BaseNode & { type: 'rrm_reasoning'; data: RRMNodeData };
 
 export type AppNode = 
   | InputNode 

@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { onMount } from 'svelte';
   import { Terminal, GitGraph, MessageSquare, Settings, Loader2 } from 'lucide-svelte';
   import { appState, setStatus, initSystem } from './lib/state.svelte.ts';
@@ -10,13 +10,13 @@
   import SettingsView from './lib/views/SettingsView.svelte';
 
   // Variabel untuk menampung Timer
-  let saveTimer;
+  let saveTimer: ReturnType<typeof setTimeout> | undefined;
 
   onMount(async () => {
     try {
       const res = await askBrain('/');
       if (appState.isReady) setStatus(`ENGINE: ${res.engine}`);
-    } catch (e) {
+    } catch {
       setStatus("⚠️ OFFLINE: Worker Not Responding");
     }
     await initSystem();
@@ -41,7 +41,7 @@
     }
 
     // 3. Reset timer (Debounce)
-    clearTimeout(saveTimer);
+    if (saveTimer !== undefined) clearTimeout(saveTimer);
 
     // 4. Mulai timer baru (Tunggu 1 detik)
     saveTimer = setTimeout(() => {
@@ -54,7 +54,9 @@
     }, 1000); 
 
     // Cleanup
-    return () => clearTimeout(saveTimer);
+    return () => {
+      if (saveTimer !== undefined) clearTimeout(saveTimer);
+    };
   });
 </script>
 

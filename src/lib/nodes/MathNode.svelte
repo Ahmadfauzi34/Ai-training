@@ -1,16 +1,24 @@
-<script>
+<script lang="ts">
   import { useSvelteFlow, Handle, Position } from '@xyflow/svelte';
   import { Calculator, Settings, ChevronUp, Grid3X3 } from 'lucide-svelte';
   import { appState } from '../state.svelte.ts';
+  import { Matrix } from '../engine/math/Matrix';
+  import type { MatrixNodeData } from '../types';
 
-  let { id, data, isConnectable } = $props();
+  interface Props {
+    id: string;
+    data: MatrixNodeData;
+    isConnectable: boolean;
+  }
+
+  let { id, data, isConnectable }: Props = $props();
   const { updateNodeData } = useSvelteFlow();
 
   let expanded = $state(false);
 
   let rawInput = $state('');
 
-  function parseNumbers(text) {
+  function parseNumbers(text: string) {
     return text
       .split(/[\s,]+/)
       .filter(s => s.trim() !== '')
@@ -34,16 +42,33 @@
   });
 
   // Ambil hasil dari Global State
-  let resultMatrix = $derived(appState.executionResults[id]);
+  let resultMatrix = $derived(appState.executionResults[id] as Matrix | null | undefined);
 
-  function updateField(field, value) {
-    const val = (field === 'rows' || field === 'cols') ? parseInt(value) || 1 : value;
-    updateNodeData(id, { [field]: val });
+  function updateOperation(operation: NonNullable<MatrixNodeData['operation']>) {
+    updateNodeData(id, { operation });
     appState.lastChange = Date.now();
   }
 
-  function handleValueInput(e) {
-    const text = e.target.value;
+  function updateDimension(field: 'rows' | 'cols', value: string) {
+    updateNodeData(id, { [field]: Number.parseInt(value, 10) || 1 });
+    appState.lastChange = Date.now();
+  }
+
+  function handleOperationChange(event: Event) {
+    const operation = (event.currentTarget as HTMLSelectElement).value as NonNullable<MatrixNodeData['operation']>;
+    updateOperation(operation);
+  }
+
+  function handleRowsInput(event: Event) {
+    updateDimension('rows', (event.currentTarget as HTMLInputElement).value);
+  }
+
+  function handleColsInput(event: Event) {
+    updateDimension('cols', (event.currentTarget as HTMLInputElement).value);
+  }
+
+  function handleValueInput(event: Event) {
+    const text = (event.currentTarget as HTMLTextAreaElement).value;
     rawInput = text; // Update UI lokal langsung biar responsif
 
     const numberArray = parseNumbers(text);
@@ -91,7 +116,7 @@
           <select 
             id={`op-${id}`}
             value={data.operation || 'multiply'}
-            onchange={(e) => updateField('operation', e.target.value)}
+            onchange={handleOperationChange}
             class="nodrag w-full bg-nord-dark border border-nord-border rounded text-xs text-nord-text p-1 outline-none focus:border-nord-primary"
           >
             <option value="multiply">Multiply (Perkalian)</option>
@@ -108,7 +133,7 @@
               id={`rows-${id}`}
               type="number" min="1"
               value={data.rows || 1}
-              oninput={(e) => updateField('rows', e.target.value)}
+              oninput={handleRowsInput}
               class="nodrag w-full bg-nord-dark border border-nord-border rounded text-xs text-nord-text p-1 text-center outline-none focus:border-nord-primary"
             />
           </div>
@@ -119,7 +144,7 @@
               id={`cols-${id}`}
               type="number" min="1"
               value={data.cols || 1}
-              oninput={(e) => updateField('cols', e.target.value)}
+              oninput={handleColsInput}
               class="nodrag w-full bg-nord-dark border border-nord-border rounded text-xs text-nord-text p-1 text-center outline-none focus:border-nord-primary"
             />
           </div>
@@ -157,7 +182,7 @@
           style="grid-template-columns: repeat({resultMatrix.cols}, minmax(0, 1fr));"
         >
           {#each resultMatrix.data as val}
-            <div class="text-[9px] text-center py-1 px-0.5 bg-nord-panel rounded text-nord-text font-mono truncate" title={val}>
+            <div class="text-[9px] text-center py-1 px-0.5 bg-nord-panel rounded text-nord-text font-mono truncate" title={String(val)}>
               {val.toFixed(2)}
             </div>
           {/each}
