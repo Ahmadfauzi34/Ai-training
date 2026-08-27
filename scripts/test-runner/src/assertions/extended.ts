@@ -20,8 +20,10 @@ export class CollectionAssertions {
     if (arr.length < 2) return;
 
     for (let i = 1; i < arr.length; i++) {
-      if (arr[i] < arr[i - 1]) {
-        assert.fail(message ?? `Array not sorted at index ${i}: ${arr[i]} < ${arr[i - 1]}`);
+      const current = arr[i]!;
+      const previous = arr[i - 1]!;
+      if (current < previous) {
+        assert.fail(message ?? `Array not sorted at index ${i}: ${current} < ${previous}`);
       }
     }
   }
@@ -32,10 +34,11 @@ export class CollectionAssertions {
   static hasNoDuplicates<T>(arr: ReadonlyArray<T>, message?: string): void {
     const seen = new Set<T>();
     for (let i = 0; i < arr.length; i++) {
-      if (seen.has(arr[i])) {
-        assert.fail(message ?? `Duplicate found at index ${i}: ${arr[i]}`);
+      const item = arr[i]!;
+      if (seen.has(item)) {
+        assert.fail(message ?? `Duplicate found at index ${i}: ${item}`);
       }
-      seen.add(arr[i]);
+      seen.add(item);
     }
   }
 
@@ -87,8 +90,9 @@ export class CollectionAssertions {
     message?: string
   ): void {
     for (let i = 0; i < arr.length; i++) {
-      if (!predicate(arr[i])) {
-        assert.fail(message ?? `Element at index ${i} does not match predicate: ${arr[i]}`);
+      const item = arr[i]!;
+      if (!predicate(item)) {
+        assert.fail(message ?? `Element at index ${i} does not match predicate: ${item}`);
       }
     }
   }
@@ -102,7 +106,7 @@ export class CollectionAssertions {
     message?: string
   ): void {
     for (let i = 0; i < arr.length; i++) {
-      if (predicate(arr[i])) return;
+      if (predicate(arr[i]!)) return;
     }
     assert.fail(message ?? `No element matches predicate`);
   }
@@ -318,8 +322,9 @@ export class ErrorAssertions {
    * Assert error is instance of expected type
    */
   static isType(actual: Error, expected: new (...args: any[]) => Error, message?: string): void {
+    const actualType = actual.constructor.name;
     if (!(actual instanceof expected)) {
-      assert.fail(message ?? `Expected ${expected.name}, got ${actual.constructor.name}`);
+      assert.fail(message ?? `Expected ${expected.name}, got ${actualType}`);
     }
   }
 

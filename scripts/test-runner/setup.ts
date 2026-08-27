@@ -17,8 +17,10 @@ function checkNodeVersion(): boolean {
   const min = MIN_VERSION.split('.').map(Number);
 
   for (let i = 0; i < 3; i++) {
-    if (current[i] > min[i]) return true;
-    if (current[i] < min[i]) return false;
+    const currentPart = current[i] ?? 0;
+    const minimumPart = min[i] ?? 0;
+    if (currentPart > minimumPart) return true;
+    if (currentPart < minimumPart) return false;
   }
   return true;
 }

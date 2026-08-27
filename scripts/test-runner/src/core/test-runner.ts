@@ -21,6 +21,21 @@ import assert from 'node:assert/strict';
  */
 export const DEFAULT_EPSILON = 1e-9;
 
+const nextAfterBuffer = new ArrayBuffer(Float64Array.BYTES_PER_ELEMENT);
+const nextAfterView = new DataView(nextAfterBuffer);
+
+function nextAfter(value: number, toward: number): number {
+  if (Number.isNaN(value) || Number.isNaN(toward)) return Number.NaN;
+  if (value === toward) return toward;
+  if (value === 0) return toward > 0 ? Number.MIN_VALUE : -Number.MIN_VALUE;
+
+  nextAfterView.setFloat64(0, value, false);
+  let bits = nextAfterView.getBigUint64(0, false);
+  bits += (toward > value) === (value > 0) ? 1n : -1n;
+  nextAfterView.setBigUint64(0, bits, false);
+  return nextAfterView.getFloat64(0, false);
+}
+
 /**
  * Branchless absolute comparison with epsilon
  * Returns true if |a - b| <= epsilon
@@ -55,11 +70,12 @@ export function nearEqualUlp(a: number, b: number, maxUlp: number = 4): boolean 
   if (!Number.isFinite(aAbs) && !Number.isFinite(bAbs)) {
     return (a > 0) === (b > 0);
   }
+  if (!Number.isFinite(aAbs) || !Number.isFinite(bAbs)) return false;
 
   const diff = Math.abs(a - b);
   const ulp = Math.max(
-    Math.abs(Math.nextafter(a, b) - a),
-    Math.abs(Math.nextafter(b, a) - b),
+    Math.abs(nextAfter(a, b) - a),
+    Math.abs(nextAfter(b, a) - b),
     Number.MIN_VALUE
   );
 
@@ -123,15 +139,15 @@ export class StrictAssertions {
 
     // Process 4 elements at a time
     for (; i + 3 < len; i += 4) {
-      if (!nearEqual(actual[i], expected[i], epsilon)) break;
-      if (!nearEqual(actual[i + 1], expected[i + 1], epsilon)) { i += 1; break; }
-      if (!nearEqual(actual[i + 2], expected[i + 2], epsilon)) { i += 2; break; }
-      if (!nearEqual(actual[i + 3], expected[i + 3], epsilon)) { i += 3; break; }
+      if (!nearEqual(actual[i]!, expected[i]!, epsilon)) break;
+      if (!nearEqual(actual[i + 1]!, expected[i + 1]!, epsilon)) { i += 1; break; }
+      if (!nearEqual(actual[i + 2]!, expected[i + 2]!, epsilon)) { i += 2; break; }
+      if (!nearEqual(actual[i + 3]!, expected[i + 3]!, epsilon)) { i += 3; break; }
     }
 
     // Process remaining elements
     for (; i < len; i++) {
-      if (!nearEqual(actual[i], expected[i], epsilon)) {
+      if (!nearEqual(actual[i]!, expected[i]!, epsilon)) {
         const msg = message ??
           `Array mismatch at index ${i}: expected ${expected[i]} ± ${epsilon}, got ${actual[i]}`;
         assert.fail(msg);
@@ -361,7 +377,7 @@ export function benchmark(
   let max = -Infinity;
 
   for (let i = 0; i < iterations; i++) {
-    const t = timings[i];
+    const t = timings[i]!;
     total += t;
     // Branchless min/max
     min = t < min ? t : min;

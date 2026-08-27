@@ -9,17 +9,17 @@
 // CALL RECORD SOA STRUCTURE
 // ============================================================================
 
-interface CallRecord<TArgs extends unknown[], TReturn> {
+export interface CallRecord<TArgs extends unknown[], TReturn> {
   timestamp: number;
   args: TArgs;
   returnValue: TReturn;
-  error?: Error;
+  error?: Error | undefined;
 }
 
 class CallLog<TArgs extends unknown[], TReturn> {
   // SOA: Pre-allocated arrays for each field
   private readonly _timestamps: Float64Array;
-  private readonly _args: TArgs[][];
+  private readonly _args: TArgs[];
   private readonly _returns: TReturn[];
   private readonly _errors: (Error | undefined)[];
 
@@ -49,9 +49,9 @@ class CallLog<TArgs extends unknown[], TReturn> {
 
   getCount(): number { return this._count; }
 
-  getTimestamp(i: number): number { return this._timestamps[i]; }
-  getArgs(i: number): TArgs { return this._args[i]; }
-  getReturn(i: number): TReturn { return this._returns[i]; }
+  getTimestamp(i: number): number { return this._timestamps[i]!; }
+  getArgs(i: number): TArgs { return this._args[i]!; }
+  getReturn(i: number): TReturn { return this._returns[i]!; }
   getError(i: number): Error | undefined { return this._errors[i]; }
 
   getAllArgs(): ReadonlyArray<TArgs> {
@@ -66,9 +66,9 @@ class CallLog<TArgs extends unknown[], TReturn> {
     if (this._count === 0) return null;
     const idx = this._count - 1;
     return {
-      timestamp: this._timestamps[idx],
-      args: this._args[idx],
-      returnValue: this._returns[idx],
+      timestamp: this._timestamps[idx]!,
+      args: this._args[idx]!,
+      returnValue: this._returns[idx]!,
       error: this._errors[idx],
     };
   }
@@ -76,16 +76,16 @@ class CallLog<TArgs extends unknown[], TReturn> {
   getCallAt(index: number): CallRecord<TArgs, TReturn> | null {
     if (index < 0 || index >= this._count) return null;
     return {
-      timestamp: this._timestamps[index],
-      args: this._args[index],
-      returnValue: this._returns[index],
+      timestamp: this._timestamps[index]!,
+      args: this._args[index]!,
+      returnValue: this._returns[index]!,
       error: this._errors[index],
     };
   }
 
   wasCalledWith(...expectedArgs: TArgs): boolean {
     for (let i = 0; i < this._count; i++) {
-      const args = this._args[i];
+      const args = this._args[i]!;
       if (args.length !== expectedArgs.length) continue;
 
       let match = true;
@@ -343,8 +343,10 @@ export class MockClock {
 
     // Execute timers that should fire
     let i = 0;
-    while (i < this._timers.length && this._timers[i].at <= target) {
-      this._timers[i].fn();
+    while (i < this._timers.length) {
+      const timer = this._timers[i]!;
+      if (timer.at > target) break;
+      timer.fn();
       i++;
     }
 
@@ -352,7 +354,7 @@ export class MockClock {
     if (i > 0) {
       const remaining = this._timers.length - i;
       for (let j = 0; j < remaining; j++) {
-        this._timers[j] = this._timers[i + j];
+        this._timers[j] = this._timers[i + j]!;
       }
       this._timers.length = remaining;
     }
@@ -371,7 +373,7 @@ export class MockClock {
     if (idx >= 0) {
       // Swap-drop instead of splice (no array reallocation)
       const last = this._timers.length - 1;
-      this._timers[idx] = this._timers[last];
+      this._timers[idx] = this._timers[last]!;
       this._timers.length = last;
     }
   }

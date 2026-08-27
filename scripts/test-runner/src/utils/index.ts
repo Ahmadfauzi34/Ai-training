@@ -9,10 +9,9 @@ export {
   stub,
   stubThrows,
   MockClock,
-  MockFunction,
-  AsyncMockFunction,
-  CallRecord,
 } from './mock.js';
+
+export type { AsyncMockFunction, CallRecord, MockFunction } from './mock.js';
 
 export {
   createFixture,
@@ -21,6 +20,6 @@ export {
   assertFileExists,
   assertFileContains,
   assertDirectoryExists,
-  FixtureContext,
-  TempFile,
 } from './fixture.js';
+
+export type { FixtureContext, TempFile } from './fixture.js';

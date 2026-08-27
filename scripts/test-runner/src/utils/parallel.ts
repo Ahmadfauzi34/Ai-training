@@ -53,8 +53,9 @@ export class WorkerPool<T, R> {
 
   private _getIdleWorker(): WorkerSlot | null {
     for (let i = 0; i < this._workers.length; i++) {
-      if (!this._workers[i].busy && this._workers[i].worker) {
-        return this._workers[i];
+      const slot = this._workers[i];
+      if (slot && !slot.busy && slot.worker) {
+        return slot;
       }
     }
     return null;
@@ -89,9 +90,10 @@ export class WorkerPool<T, R> {
     if (!slot) {
       // Try to create new worker if under limit
       for (let i = 0; i < this._workers.length; i++) {
-        if (!this._workers[i].worker) {
-          this._createWorker(this._workers[i]);
-          slot = this._workers[i];
+        const candidate = this._workers[i];
+        if (candidate && !candidate.worker) {
+          this._createWorker(candidate);
+          slot = candidate;
           break;
         }
       }
@@ -187,7 +189,7 @@ export async function parallelMap<T, R>(
   async function worker(): Promise<void> {
     while (index < items.length) {
       const currentIndex = index++;
-      results[currentIndex] = await mapper(items[currentIndex]);
+      results[currentIndex] = await mapper(items[currentIndex]!);
     }
   }
 
