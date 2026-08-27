@@ -21,6 +21,13 @@ describe('RRM mode contract', () => {
     StrictAssertions.strictEqual(normalizeRRMMode('unknown'), null);
   });
 
+  it('rejects mode names inherited from Object.prototype', () => {
+    for (const inheritedMode of ['constructor', 'toString', '__proto__']) {
+      StrictAssertions.strictEqual(isRRMMode(inheritedMode), false);
+      StrictAssertions.strictEqual(normalizeRRMMode(inheritedMode), null);
+    }
+  });
+
   it('migrates legacy persisted modes while preserving sandbox behavior', () => {
     StrictAssertions.strictEqual(normalizeRRMMode('sandbox'), 'plr_proof');
     StrictAssertions.strictEqual(normalizeRRMMode('fhrr'), 'fhrr_similarity');

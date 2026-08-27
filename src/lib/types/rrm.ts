@@ -61,12 +61,14 @@ const LEGACY_RRM_MODES: Record<string, RRMMode> = {
 };
 
 export function isRRMMode(value: unknown): value is RRMMode {
-  return typeof value === 'string' && value in RRM_MODE_DEFINITIONS;
+  return typeof value === 'string' && Object.hasOwn(RRM_MODE_DEFINITIONS, value);
 }
 
 export function normalizeRRMMode(value: unknown): RRMMode | null {
   if (isRRMMode(value)) return value;
-  if (typeof value === 'string') return LEGACY_RRM_MODES[value] ?? null;
+  if (typeof value === 'string' && Object.hasOwn(LEGACY_RRM_MODES, value)) {
+    return LEGACY_RRM_MODES[value] ?? null;
+  }
   return null;
 }
 
