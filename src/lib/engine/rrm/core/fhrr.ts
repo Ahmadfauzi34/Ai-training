@@ -116,7 +116,7 @@ export const FHRR = {
 
     for (const v of vectors) {
       for (let i = 0; i < DIMENSION; i++) {
-        res[i] += v[i]!;
+        res[i]! += v[i]!;
       }
     }
     return res;

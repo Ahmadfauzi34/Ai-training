@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "node --experimental-strip-types scripts/run-tests.ts",
+    "check": "svelte-check --tsconfig ./tsconfig.json",
+    "check:test-runner": "tsc -p tsconfig.test-runner.json",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview"
@@ -25,6 +27,7 @@
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@tailwindcss/vite": "4.0.0-alpha.1",
     "@tsconfig/svelte": "^5.0.6",
+    "@types/node": "^20.19.43",
     "svelte": "5.55.5",
     "svelte-check": "^4.3.5",
     "tailwindcss": "4.0.0-alpha.1",

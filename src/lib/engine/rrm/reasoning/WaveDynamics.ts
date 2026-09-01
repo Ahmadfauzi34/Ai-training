@@ -59,7 +59,7 @@ export class WaveDynamics {
     ): void {
         // Tarik ke arah attractor, tolak dari repulsor
         for (let i = 0; i < GLOBAL_DIMENSION; i++) {
-            agentTensor[i] += alpha * (attractorTensor[i]! - repulsorTensor[i]!);
+            agentTensor[i]! += alpha * (attractorTensor[i]! - repulsorTensor[i]!);
         }
 
         // L2 Normalization
@@ -73,7 +73,7 @@ export class WaveDynamics {
         // Ini adalah contoh Math Branchless sejati!
         const invMag = 1.0 / (mag + 1e-15);
         for (let i = 0; i < GLOBAL_DIMENSION; i++) {
-            agentTensor[i] *= invMag;
+            agentTensor[i]! *= invMag;
         }
     }
 
@@ -87,12 +87,12 @@ export class WaveDynamics {
 
         const totalAttractor = new Float32Array(GLOBAL_DIMENSION).fill(0);
         for (const attr of attractors) {
-            for (let i = 0; i < GLOBAL_DIMENSION; i++) totalAttractor[i] += attr[i]!;
+            for (let i = 0; i < GLOBAL_DIMENSION; i++) totalAttractor[i]! += attr[i]!;
         }
 
         const totalRepulsor = new Float32Array(GLOBAL_DIMENSION).fill(0);
         for (const rep of repulsors) {
-            for (let i = 0; i < GLOBAL_DIMENSION; i++) totalRepulsor[i] += rep[i]!;
+            for (let i = 0; i < GLOBAL_DIMENSION; i++) totalRepulsor[i]! += rep[i]!;
         }
 
         // Terapkan medan ke tensor entitas

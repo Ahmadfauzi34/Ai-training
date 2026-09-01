@@ -73,17 +73,17 @@ class TestResultBuffer {
 
   getCount(): number { return this._count; }
 
-  getName(i: number): string { return this._names[i]; }
-  getFile(i: number): string { return this._files[i]; }
+  getName(i: number): string { return this._names[i]!; }
+  getFile(i: number): string { return this._files[i]!; }
   getLine(i: number): number | undefined { return this._lines[i]; }
   getColumn(i: number): number | undefined { return this._columns[i]; }
-  getDuration(i: number): number { return this._durations[i]; }
+  getDuration(i: number): number { return this._durations[i]!; }
   getError(i: number): Error | undefined { return this._errors[i]; }
 
   getTotalDuration(): number {
     let sum = 0;
     for (let i = 0; i < this._count; i++) {
-      sum += this._durations[i];
+      sum += this._durations[i]!;
     }
     return sum;
   }
@@ -96,7 +96,7 @@ class TestResultBuffer {
     if (this._count === 0) return 0;
     let min = Infinity;
     for (let i = 0; i < this._count; i++) {
-      const d = this._durations[i];
+      const d = this._durations[i]!;
       min = d < min ? d : min; // Branchless min
     }
     return min;
@@ -106,7 +106,7 @@ class TestResultBuffer {
     if (this._count === 0) return 0;
     let max = -Infinity;
     for (let i = 0; i < this._count; i++) {
-      const d = this._durations[i];
+      const d = this._durations[i]!;
       max = d > max ? d : max; // Branchless max
     }
     return max;
@@ -247,7 +247,7 @@ export function createCustomReporter(options: CustomReporterOptions = {}) {
         let maxDur = -Infinity;
 
         for (let i = 0; i < idx; i++) {
-          const d = allDurations[i];
+          const d = allDurations[i]!;
           totalDuration += d;
           minDur = d < minDur ? d : minDur;
           maxDur = d > maxDur ? d : maxDur;
@@ -291,22 +291,21 @@ export function createCustomReporter(options: CustomReporterOptions = {}) {
       if (showTiming && passBuffer.getCount() > 0) {
         // Collect and sort (simple bubble sort for small arrays)
         const count = Math.min(passBuffer.getCount(), 5);
-        const slowest = new Array<{ name: string; duration: number }>(count);
+        const slowest = new Array<{ name: string; duration: number } | undefined>(count);
 
         for (let i = 0; i < passBuffer.getCount(); i++) {
           const dur = passBuffer.getDuration(i);
           const name = passBuffer.getName(i);
 
           // Insertion into sorted array
-          let inserted = false;
           for (let j = 0; j < count; j++) {
-            if (!slowest[j] || dur > slowest[j].duration) {
+            const current = slowest[j];
+            if (!current || dur > current.duration) {
               // Shift remaining elements
               for (let k = count - 1; k > j; k--) {
                 slowest[k] = slowest[k - 1];
               }
               slowest[j] = { name, duration: dur };
-              inserted = true;
               break;
             }
           }
@@ -314,8 +313,9 @@ export function createCustomReporter(options: CustomReporterOptions = {}) {
 
         this.push(`\n${colors.bold}Slowest Tests:${colors.reset}\n`);
         for (let i = 0; i < count; i++) {
-          if (slowest[i]) {
-            this.push(`  ${i + 1}. ${slowest[i].name}: ${slowest[i].duration.toFixed(2)}ms\n`);
+          const result = slowest[i];
+          if (result) {
+            this.push(`  ${i + 1}. ${result.name}: ${result.duration.toFixed(2)}ms\n`);
           }
         }
       }

@@ -23,16 +23,18 @@ const ExitCode = {
   RUNTIME_ERROR: 5,
 } as const;
 
+type ExitCodeValue = typeof ExitCode[keyof typeof ExitCode];
+
 // Default configuration with environment overrides
 const CONFIG = {
   PATTERN: process.argv[2] || 'src/**/*.test.ts',
-  CONCURRENCY: parseInt(process.env.TEST_CONCURRENCY || '4', 10),
-  STRICT_MODE: process.env.STRICT_MODE === 'true',
-  CI: process.env.CI === 'true',
-  TIMEOUT_MS: parseInt(process.env.TEST_TIMEOUT_MS || '30000', 10),
-  COVERAGE_THRESHOLD: parseInt(process.env.COVERAGE_THRESHOLD || '80', 10),
-  MAX_FAILURES: parseInt(process.env.MAX_FAILURES || '100', 10),
-  FORCE_EXIT: process.env.FORCE_EXIT !== 'false',
+  CONCURRENCY: parseInt(process.env['TEST_CONCURRENCY'] || '4', 10),
+  STRICT_MODE: process.env['STRICT_MODE'] === 'true',
+  CI: process.env['CI'] === 'true',
+  TIMEOUT_MS: parseInt(process.env['TEST_TIMEOUT_MS'] || '30000', 10),
+  COVERAGE_THRESHOLD: parseInt(process.env['COVERAGE_THRESHOLD'] || '80', 10),
+  MAX_FAILURES: parseInt(process.env['MAX_FAILURES'] || '100', 10),
+  FORCE_EXIT: process.env['FORCE_EXIT'] !== 'false',
 };
 
 // ============================================================================
@@ -81,7 +83,11 @@ class StatsTracker {
   addFailure(name: string, file?: string, error?: Error): void {
     // Bounds check to prevent buffer overflow (ghost state pattern)
     if (this._failureCount < this._maxFailures) {
-      this._failures[this._failureCount] = { name, file, error };
+      this._failures[this._failureCount] = {
+        name,
+        ...(file === undefined ? {} : { file }),
+        ...(error === undefined ? {} : { error }),
+      };
       this._failureCount += 1;
     }
   }
@@ -257,7 +263,6 @@ async function main(): Promise<number> {
   });
 
   // Compose reporter pipeline
-  // @ts-expect-error Node stream API typing
   const reporterStream = stream.compose(reporter);
   reporterStream.pipe(process.stdout);
 
@@ -276,7 +281,7 @@ async function main(): Promise<number> {
   console.log(`${'='.repeat(60)}\n`);
 
   // Determine exit code
-  let exitCode = ExitCode.SUCCESS;
+  let exitCode: ExitCodeValue = ExitCode.SUCCESS;
 
   // Check for test failures
   if (stats.failed > 0) {
@@ -287,7 +292,7 @@ async function main(): Promise<number> {
     const displayCount = Math.min(failures.length, 10);
 
     for (let i = 0; i < displayCount; i++) {
-      const f = failures[i];
+      const f = failures[i]!;
       console.error(`\n   ${i + 1}. ${f.name}`);
       if (f.file) console.error(`      File: ${f.file}`);
       if (f.error) console.error(`      Error: ${f.error.message}`);

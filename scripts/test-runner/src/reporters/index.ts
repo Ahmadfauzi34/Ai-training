@@ -4,5 +4,6 @@
 
 export {
   createCustomReporter,
-  CustomReporterOptions,
 } from './custom-reporter.js';
+
+export type { CustomReporterOptions } from './custom-reporter.js';

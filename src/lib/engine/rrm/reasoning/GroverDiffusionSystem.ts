@@ -117,14 +117,14 @@ export class GroverDiffusionSystem {
       const baseIdx = i * D;
 
       for (let d = 0; d < D; d += 8) {
-        this.amplitudes[baseIdx + d] *= mult;
-        this.amplitudes[baseIdx + d + 1] *= mult;
-        this.amplitudes[baseIdx + d + 2] *= mult;
-        this.amplitudes[baseIdx + d + 3] *= mult;
-        this.amplitudes[baseIdx + d + 4] *= mult;
-        this.amplitudes[baseIdx + d + 5] *= mult;
-        this.amplitudes[baseIdx + d + 6] *= mult;
-        this.amplitudes[baseIdx + d + 7] *= mult;
+        this.amplitudes[baseIdx + d]! *= mult;
+        this.amplitudes[baseIdx + d + 1]! *= mult;
+        this.amplitudes[baseIdx + d + 2]! *= mult;
+        this.amplitudes[baseIdx + d + 3]! *= mult;
+        this.amplitudes[baseIdx + d + 4]! *= mult;
+        this.amplitudes[baseIdx + d + 5]! *= mult;
+        this.amplitudes[baseIdx + d + 6]! *= mult;
+        this.amplitudes[baseIdx + d + 7]! *= mult;
       }
     }
   }
@@ -138,13 +138,13 @@ export class GroverDiffusionSystem {
     for (let i = 0; i < N; i++) {
       const baseIdx = i * D;
       for (let d = 0; d < D; d++) {
-        meanBuf[d] += amps[baseIdx + d]!;
+        meanBuf[d]! += amps[baseIdx + d]!;
       }
     }
 
     const invN = 1.0 / N;
     for (let d = 0; d < D; d++) {
-      meanBuf[d] *= invN;
+      meanBuf[d]! *= invN;
     }
 
     for (let i = 0; i < N; i++) {
@@ -188,7 +188,7 @@ export class GroverDiffusionSystem {
       const scale = 1.0 / (norm + thermalFactor);
 
       for (let d = 0; d < D; d++) {
-        amps[baseIdx + d] *= scale;
+        amps[baseIdx + d]! *= scale;
       }
     }
   }

@@ -1,19 +1,34 @@
-<script>
+<script lang="ts">
   import { useSvelteFlow, Handle, Position } from '@xyflow/svelte'; // + useSvelteFlow
   import { Cpu, Settings, ChevronUp } from 'lucide-svelte';
   import { appState } from '../state.svelte.ts'; // + appState
+  import type { ActionNodeData } from '../types';
 
   // + id
-  let { id, data, isConnectable } = $props();
+  interface Props {
+    id: string;
+    data: ActionNodeData;
+    isConnectable: boolean;
+  }
+
+  let { id, data, isConnectable }: Props = $props();
   const { updateNodeData } = useSvelteFlow(); // + hook
 
   let expanded = $state(false);
   const uid = crypto.randomUUID(); 
 
   // Handler Generik untuk Update Data
-  function updateField(field, value) {
+  function updateField(field: 'model' | 'prompt', value: string) {
     updateNodeData(id, { [field]: value });
     appState.lastChange = Date.now();
+  }
+
+  function handleModelChange(event: Event) {
+    updateField('model', (event.currentTarget as HTMLSelectElement).value);
+  }
+
+  function handlePromptInput(event: Event) {
+    updateField('prompt', (event.currentTarget as HTMLTextAreaElement).value);
   }
 </script>
 
@@ -45,7 +60,7 @@
         <select 
           id={`model-${uid}`}
           value={data.model}
-          onchange={(e) => updateField('model', e.target.value)}
+          onchange={handleModelChange}
           class="nodrag w-full bg-nord-dark border border-nord-border rounded text-xs text-nord-text p-1 outline-none focus:border-nord-primary"
         >
           <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
@@ -59,7 +74,7 @@
         <textarea 
           id={`prompt-${uid}`}
           value={data.prompt}
-          oninput={(e) => updateField('prompt', e.target.value)}
+          oninput={handlePromptInput}
           class="nodrag w-full bg-nord-dark border border-nord-border rounded text-xs text-nord-text p-2 h-24 outline-none focus:border-nord-primary resize-none font-mono text-[10px]"
           placeholder="Instruksi untuk AI..."
         ></textarea>

@@ -143,9 +143,9 @@ export class PLRKernel {
 
     if (sourceProps.length === 0) return null;
 
-    let boundVector = sourceProps[0].vector;
+    let boundVector = sourceProps[0]!.vector;
     for (let i = 1; i < sourceProps.length; i++) {
-      boundVector = FHRR.bind(boundVector, sourceProps[i].vector);
+      boundVector = FHRR.bind(boundVector, sourceProps[i]!.vector);
     }
 
     const yieldVec = this.createVectorForText(yieldsContent);
@@ -177,12 +177,14 @@ export class PLRKernel {
 
     for (let i = 0; i < allProps.length; i++) {
       for (let j = i + 1; j < allProps.length; j++) {
-        const sim = FHRR.similarity(allProps[i].vector, allProps[j].vector);
+        const left = allProps[i]!;
+        const right = allProps[j]!;
+        const sim = FHRR.similarity(left.vector, right.vector);
         if (sim < -0.6) {
-          const msg = `CONTRADICTION: [${allProps[i].id}] "${allProps[i].content}" vs [${allProps[j].id}] "${allProps[j].content}" (similarity: ${sim.toFixed(3)})`;
+          const msg = `CONTRADICTION: [${left.id}] "${left.content}" vs [${right.id}] "${right.content}" (similarity: ${sim.toFixed(3)})`;
           this.state.contradictions.push(msg);
-          allProps[i].status = 'CONTRADICTED';
-          allProps[j].status = 'CONTRADICTED';
+          left.status = 'CONTRADICTED';
+          right.status = 'CONTRADICTED';
         }
       }
     }

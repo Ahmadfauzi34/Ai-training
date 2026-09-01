@@ -1,23 +1,30 @@
-<script>
+<script lang="ts">
   // 1. Import useSvelteFlow
   import { useSvelteFlow, Handle, Position } from '@xyflow/svelte';
   import { BrainCircuit, Save, Check } from 'lucide-svelte';
   import { askBrain } from '../brain.ts';
   import { storage } from '../storage.js';
   import { appState } from '../state.svelte.ts';
+  import type { MemoryNodeData } from '../types';
 
   // 2. Terima 'id' dari props (Penting untuk updateNodeData)
-  let { id, data, isConnectable } = $props();
+  interface Props {
+    id: string;
+    data: MemoryNodeData;
+    isConnectable: boolean;
+  }
+
+  let { id, data, isConnectable }: Props = $props();
 
   // 3. Ambil fungsi update dari hook
   const { updateNodeData } = useSvelteFlow();
 
   let isProcessing = $state(false);
-  let status = $state('idle'); 
+  let status = $state<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   // Fungsi Handler Input yang Aman
-  function handleInput(e) {
-    const newValue = e.target.value;
+  function handleInput(event: Event) {
+    const newValue = (event.currentTarget as HTMLTextAreaElement).value;
 
     // A. Update Data via Svelte Flow (Legal Way)
     updateNodeData(id, { text: newValue });
@@ -43,8 +50,9 @@
 
       status = 'saved';
       setTimeout(() => status = 'idle', 2000);
-    } catch (e) {
-      alert(`Gagal belajar: ${e.message}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      alert(`Gagal belajar: ${message}`);
       status = 'error';
     } finally {
       isProcessing = false;

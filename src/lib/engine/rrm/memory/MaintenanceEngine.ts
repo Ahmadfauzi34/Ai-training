@@ -45,7 +45,7 @@ export class MaintenanceEngine {
         const mag = this.magnitude(v);
         if (mag > 1e-12) {
             for (let i = 0; i < GLOBAL_DIMENSION; i++) {
-                v[i] /= mag;
+                v[i]! /= mag;
             }
         }
     }
@@ -100,8 +100,8 @@ export class MaintenanceEngine {
                         totalCollisions++;
                         // Tolakan sebanding dengan kemiripan
                         for (let d = 0; d < GLOBAL_DIMENSION; d++) {
-                            repulsionFields[offsetA + d] -= sim * vB[d]!;
-                            repulsionFields[offsetB + d] -= sim * vA[d]!;
+                            repulsionFields[offsetA + d]! -= sim * vB[d]!;
+                            repulsionFields[offsetB + d]! -= sim * vA[d]!;
                         }
                     }
                 }
@@ -128,7 +128,7 @@ export class MaintenanceEngine {
 
                 if (hasEnergy) {
                     for (let d = 0; d < GLOBAL_DIMENSION; d++) {
-                        vA[d] += repulsionFields[offsetA + d]! * temperature;
+                        vA[d]! += repulsionFields[offsetA + d]! * temperature;
                     }
                     this.normalizeInPlace(vA); // Ini mengubah data asli di seedBank karena pass-by-reference subarray
                 }

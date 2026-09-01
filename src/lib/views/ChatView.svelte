@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
   import { Send } from 'lucide-svelte';
   import { appState, addLog } from '../state.svelte.ts'; 
   import { askBrain } from '../brain.ts';
@@ -38,8 +38,9 @@
       // C. Jalankan Engine!
       await engine.run(userMsg);
 
-    } catch (e) {
-      addLog('system', `❌ Critical Error: ${e.message}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      addLog('system', `❌ Critical Error: ${message}`);
     }
   }
 </script>

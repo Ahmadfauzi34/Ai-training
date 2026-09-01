@@ -64,7 +64,7 @@ export class Matrix {
         const valA = aData[i_aCols + k]!;
         const k_bCols = k * bCols;
         for (let j = 0; j < bCols; j++) {
-          resData[i_bCols + j] += valA * bData[k_bCols + j]!;
+          resData[i_bCols + j]! += valA * bData[k_bCols + j]!;
         }
       }
     }

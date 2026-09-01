@@ -1,20 +1,31 @@
-<script>
+<script lang="ts">
   import { useSvelteFlow, Handle, Position } from '@xyflow/svelte';
   import { BrainCircuit, Settings, ChevronUp } from 'lucide-svelte';
   import { appState } from '../state.svelte.ts';
+  import type { RRMNodeData } from '../types';
 
-  let { id, data, isConnectable } = $props();
+  interface Props {
+    id: string;
+    data: RRMNodeData;
+    isConnectable: boolean;
+  }
+
+  let { id, data, isConnectable }: Props = $props();
   const { updateNodeData } = useSvelteFlow();
 
   let expanded = $state(false);
   const uid = crypto.randomUUID();
 
-  function updateField(field, value) {
-    updateNodeData(id, { [field]: value });
+  function handleModeChange(event: Event) {
+    const mode = (event.currentTarget as HTMLSelectElement).value as RRMNodeData['mode'];
+    updateNodeData(id, { mode });
     appState.lastChange = Date.now();
   }
 
-  let executionOutput = $derived(appState.executionResults?.[id] || '');
+  let executionOutput = $derived.by(() => {
+    const output = appState.executionResults[id];
+    return typeof output === 'string' ? output : '';
+  });
 </script>
 
 <div class={`shadow-xl rounded-lg border-2 transition-all duration-300 bg-nord-panel ${expanded ? 'border-nord-primary w-72' : 'border-nord-border w-44'}`}>
@@ -42,7 +53,7 @@
         <select
           id={`mode-${uid}`}
           value={data.mode || 'plr_proof'}
-          onchange={(e) => updateField('mode', e.target.value)}
+          onchange={handleModeChange}
           class="nodrag w-full bg-nord-dark border border-nord-border rounded text-xs text-nord-text p-1 outline-none focus:border-nord-primary"
         >
           <option value="plr_proof">PLR Proof State Kernel</option>

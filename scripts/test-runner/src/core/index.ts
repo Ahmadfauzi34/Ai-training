@@ -14,12 +14,12 @@ export {
 
   // Test suite builder
   TestSuite,
-  TestSuiteConfig,
 
   // Benchmark utilities
   benchmark,
-  BenchmarkResult,
 
   // Memory leak detection
   MemoryLeakDetector,
 } from './test-runner.js';
+
+export type { BenchmarkResult, TestSuiteConfig } from './test-runner.js';

@@ -139,7 +139,7 @@ export class EntityManifold {
         for (let i = 0; i < GLOBAL_DIMENSION; i++) magSq += tensor[i]! * tensor[i]!;
 
         const invMag = 1.0 / (Math.sqrt(magSq) + 1e-15);
-        for (let i = 0; i < GLOBAL_DIMENSION; i++) tensor[i] *= invMag;
+        for (let i = 0; i < GLOBAL_DIMENSION; i++) tensor[i]! *= invMag;
     }
 
     /**

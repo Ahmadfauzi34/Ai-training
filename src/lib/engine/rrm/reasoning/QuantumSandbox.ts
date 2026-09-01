@@ -138,7 +138,7 @@ export class QuantumSandbox {
 
             // Superposisi (Bundling) tanpa L2 Norm dulu agar magnitudo benda solid lebih kuat
             for (let d = 0; d < GLOBAL_DIMENSION; d++) {
-                this.globalBlackboard[d] += eTensor[d]!;
+                this.globalBlackboard[d]! += eTensor[d]!;
             }
         }
 

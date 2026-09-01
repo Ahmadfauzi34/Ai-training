@@ -5,7 +5,7 @@
  * Zero-allocation pattern for hot-path test data generation.
  */
 
-import { mkdirSync, writeFileSync, rmSync, existsSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
@@ -48,8 +48,8 @@ class FixturePool {
   acquire(): FixtureSlot | null {
     // Find first available slot (linear scan, cache-friendly)
     for (let i = 0; i < this._slots.length; i++) {
-      if (!this._slots[i].inUse) {
-        const slot = this._slots[i];
+      const slot = this._slots[i];
+      if (slot && !slot.inUse) {
         slot.id = ++this._nextId;
         slot.path = join(this._baseDir, `fixture-${slot.id}`);
         slot.inUse = true;
@@ -70,16 +70,19 @@ class FixturePool {
   release(slot: FixtureSlot): void {
     const idx = this._slots.findIndex(s => s.id === slot.id);
     if (idx >= 0) {
+      const pooledSlot = this._slots[idx];
+      if (!pooledSlot) return;
+
       // Clean up directory
       if (existsSync(slot.path)) {
         rmSync(slot.path, { recursive: true, force: true });
       }
 
       // Reset slot (ghost state pattern)
-      this._slots[idx].id = -1;
-      this._slots[idx].path = '';
-      this._slots[idx].inUse = false;
-      this._slots[idx].createdAt = 0;
+      pooledSlot.id = -1;
+      pooledSlot.path = '';
+      pooledSlot.inUse = false;
+      pooledSlot.createdAt = 0;
     }
   }
 
@@ -179,7 +182,7 @@ export function createTempFile(extension: string = '.tmp'): TempFile {
     },
 
     read(): Buffer {
-      return require('node:fs').readFileSync(filePath);
+      return readFileSync(filePath);
     },
 
     cleanup(): void {
@@ -248,14 +251,14 @@ export function assertFileExists(path: string): void {
 }
 
 export function assertFileContains(path: string, expected: string): void {
-  const content = require('node:fs').readFileSync(path, 'utf-8');
+  const content = readFileSync(path, 'utf-8');
   if (!content.includes(expected)) {
     throw new Error(`Expected file ${path} to contain "${expected}"`);
   }
 }
 
 export function assertDirectoryExists(path: string): void {
-  const stat = require('node:fs').statSync(path);
+  const stat = statSync(path);
   if (!stat.isDirectory()) {
     throw new Error(`Expected directory to exist: ${path}`);
   }
